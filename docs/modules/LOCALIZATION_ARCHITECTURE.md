@@ -122,3 +122,21 @@ Prepare an implementation design and contract specification covering: locale res
 - BCP 47 (RFC 5646): https://www.rfc-editor.org/rfc/rfc5646.html
 - Unicode UAX #15: https://www.unicode.org/reports/tr15/
 - Unicode CLDR: https://cldr.unicode.org/
+
+## 15. Cross-module reconciliation: search, UX and alphabet quality gate (PROPOSED, 2026-10-12)
+
+This section reconciles the failed concurrent `main` update without changing the approved languages. Canonical business identifiers, document numbers, tenant IDs, product SKU, accounting values and original business names **never change** when the display locale changes.
+
+| Contract | Source of truth | PROPOSED acceptance test |
+|---|---|---|
+| UI locale selection | Explicit user setting, then tenant and platform defaults (precedence proposed) | Web/mobile/offline same preference; unsupported and missing keys render deterministic safe fallback, not silent data corruption |
+| API errors and events | Backend stable `error_code`, `schema_version`, typed safe params | Changing locale does not alter authorization, event identity or idempotency |
+| Original vs search-normalized text | Business owner retains original, Search stores versioned derived aliases | Uzbek Latin apostrophe/glyph variants and Cyrillic queries are searchable; exact SKU/barcode dominates fuzzy alias; no false canonical ID collisions |
+| Security in global search | Security permission enforcement + verified tenant/company/branch scope | Search counts, suggestions, filters, caches and background reindex jobs never leak unauthorized tenant/branch items |
+| Indexed version migration | Search index `normalizer_version` + offline cache version | Shadow index/backfill/compare/atomic cutover/rollback; old/new version compatibility tests and no loss of original text |
+| Hidden new Uzbek alphabet | Localization feature registry, server-side feature access and versioned bundle | OFF by default, absent from public menu; internal pilot opt-in only; old content remains accessible, fallback tested |
+| Accessibility and usability | UX acceptance + localized catalogs | Screen reader labels, keyboard focus, mobile touch, long Russian strings, plural/currency, date/number formatting, pseudo-localization and offline missing-key tests |
+
+**Responsibilities:** Localization owns locale catalog, script mappings and normalization proposal; UX owns task-first search experience; Security owns permission semantics; Backend/API owns stable contracts; Database/Search owns index consistency and tenant-scoped query execution; Mobile owns offline cache state. Transliteration is never an unreviewed mutation of legal, ledger or stock facts.
+
+**Release gates (OPEN):** platform default locale choice, approved normalization mapping and alias collision thresholds, full Cyrillic Uzbek UI versus search-only support, enterprise language restrictions, search latency/usability numeric targets, and final publication rules for future Uzbek alphabet. All proposed test thresholds and locale identifiers still need corresponding ADR / explicit approval as applicable.
