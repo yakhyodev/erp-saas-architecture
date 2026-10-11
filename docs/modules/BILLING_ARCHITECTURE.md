@@ -93,3 +93,120 @@ Acceptance criteria: ledger debits equal credits; posted entries immutable; repl
 ## 18. Shared-document change proposals (not applied)
 
 DECISIONS.md: reference the approved billing business rules, but list ADR-BILL-001..008 as PROPOSED. MASTER_ARCHITECTURE.md: describe Billing boundary and Tenant/Finance/IAM contracts. REQUIREMENTS.md: add ledger, audit, idempotency and approved negative-balance invariants. MODULE_REGISTRY.md: add billing dependencies. OPEN_QUESTIONS.md: add Q01–Q17. CHANGELOG.md: note creation of module architecture proposal. Do not replace these shared files without explicit synchronization review.
+
+---
+
+## 19. Cross-module harmonization (AR-001, AR-009, AR-010; MR-02…MR-05) — 2026-10-11
+
+> **Status: PROPOSED CLARIFICATION / OPEN DECISIONS.** Audit source: [historical architecture review](../reviews/ARCHITECTURE_REVIEW.md); cross-module registries: [DECISIONS](../../DECISIONS.md), [REQUIREMENTS](../../REQUIREMENTS.md), [MODULE_REGISTRY](../../MODULE_REGISTRY.md), [OPEN_QUESTIONS](../../OPEN_QUESTIONS.md). Historical audit is not current approval. Existing sections 3, 5, 6, 7, 9, 10, 13 must be read with this section: earlier “one wallet per tenant company” is **only option B**, not fixed cardinality.
+
+### 19.1 AR-001 / MR-01 — Tenant → Company → BillingAccount → Wallet
+
+**Ownership, not asserted cardinality:** Tenant Registry is authoritative for tenant/company/branch/legal entity identifiers and lifecycle; Billing is authoritative for BillingAccount, payment responsibility mapping, Wallet and SaaS debt/ledger; Finance is authoritative for ERP GL/legal accounting. A branch belongs to the tenant/company relationship validated by Multi-Tenant; no `billing_account_id = tenant_id` or `company_id = tenant_id` assumption. LegalEntity identity and payer relationships remain OPEN.
+
+| Variant | Tenant → Company | Company → BillingAccount | BillingAccount → Wallet | Payer / debt holder | Trade-off / status |
+|---|---|---|---|---|---|
+| A. Tenant consolidated | 1:N candidate | N:1 shared tenant account | 1:1 candidate | Tenant-contracted payer | Simple consolidated billing; legal company debt allocation complex; PROPOSED |
+| **B. Company account (preferred candidate)** | 1:N candidate | 1:1 per billable company | 1:1 candidate | Company-contracted payer/legal entity TBD | Cleaner attribution, more top-ups; **PROPOSED**, not APPROVED |
+| C. Flexible contract accounts | 1:N candidate | N:M via effective-dated company/account assignment (explicit mapping) | 1:N candidate | Contract payer/account debt holder | Enterprise flexibility, complex invoices/migration/reconciliation; PROPOSED |
+| D. Branch wallets | 1:N company; 1:N branch | 1:N branch accounts | 1:1 or 1:N | Branch payer only if lawful/contractual | Maximum separation, operational burden; PROPOSED, not default |
+
+**Required contract (PROPOSED):** `tenant_id`, `company_id`, optional `branch_id`, explicit `billing_account_id`, `wallet_id`, `payer_party_id?`, `legal_entity_id?`, `assignment_version`, `effective_from`, `effective_to`. Each usage/seat charge carries source tenant/company/branch/user-or-membership, source document/operation, producer identity, rating version, charge period, `ledger_transaction_id` and immutable assignment snapshot. Server validates account-to-tenant/company membership at event effective time; no client-supplied wallet authority. Ledger entry must separately retain **source attribution** (where activity happened) and **liability attribution** (which account owes), including reassignment/correction linkage; do not mutate old entries when branch/account moves. Scope, payer, enterprise multi-company consolidation, wallet pooling, tenant migration, restore and negative-debt transfer stay OPEN. Even with single wallet, branch analytics do not create separate debt unless approved.
+
+**Cross-module handoff:** compatible with [Multi-Tenant §10](MULTI_TENANT_ARCHITECTURE.md) optional company/branch and independent BillingAccount mapping; IAM controls memberships, not financial payer; enterprise isolation/sharding follows immutable tenant context. Do not merge SaaS credit ledger with [Finance accounting](FINANCE_ARCHITECTURE.md) or presume FIN-001 provenance approved.
+
+### 19.2 AR-010 / MR-04 — Document type × transition × charge policy
+
+Sales/Inventory owns authoritative document state, type, revision and legal/stock consequences; Billing owns price, charge eligibility, dedup and reversal. **No lifecycle row below is APPROVED.** “No charge” is a **suggested safe default**, not a user-approved exclusion. Transition facts are not directly interchangeable with billable event: derive a canonical billable fact only under a versioned approved mapping.
+
+| Source document type | Transition / event | Candidate action | Decision status / caveat |
+|---|---|---|---|
+| Sales order | create / edit draft | No charge candidate | OPEN: draft documents could become billable |
+| Sales order | submit | Charge **or** no charge | OPEN: submitted vs confirmed vs finalized boundary |
+| Sales order | confirm | One base charge + excess volume **or** defer | OPEN: candidate charge trigger; no implicit approval |
+| Sales order | dispatch / partial fulfilment / close | No second base charge if already charged; otherwise evaluate | OPEN: physical stock posting is not automatically billing posting |
+| Purchase order | draft → approved | Charge **or** no charge | OPEN: which purchased documents billable |
+| Goods receipt | inspected → posted | Charge **or** no charge | OPEN: receipt may be billable independently |
+| Stock transfer | dispatch / receive / partial receive | Per logical transfer **or** per separately approved posted document; no duplicate per leg | OPEN: aggregation and policy |
+| Customer/supplier return | return requested / approved / posted | No charge, new charge **or** reversal/credit against original | OPEN: returns not always refunds |
+| Inventory adjustment/count | approve / post | Charge **or** no charge | OPEN: scope/unit |
+| Any previously charged document | amend / correction / revise | Delta charge **or** reverse + re-rate; never duplicate original | OPEN: pricing effective date and accounting-period correction |
+| Any charged document | cancel before/after final posting | No new charge; original reversal **or** nonrefundable charge | OPEN: cancellation/refund policy |
+| Any type | retry / duplicate import / offline replay | Never second economic charge for same business occurrence | PROPOSED idempotency safety invariant; charge eligibility remains OPEN |
+
+**PROPOSED canonical contract:** `tenant_id, company_id, branch_id?, document_type, source_document_id, source_revision, transition_name, transition_id, billable_occurrence_id, related_original_occurrence_id?, source_effective_at, server_committed_at, quantities, volume_unit, actor_id?, schema_version`. Include `rating_policy_version`, `idempotency_key` and `correlation_id` in Billing derived fact. Dedup **semantic business occurrence** separate from transport event ID; source revision plus canonical occurrence version must identify amendments. Same id/key but different content is conflict, never silently replace. Reversal references `original_charge_id`, carries its own unique occurrence, creates compensating ledger entries and invoice adjustment when finalized; no history deletion. Sales stock/Finance GL transitions do not automatically determine SaaS charging. Requires joint approval with [Sales & Inventory §10](SALES_INVENTORY.md), and integrations for import/external sources.
+
+### 19.3 AR-009 / MR-02 — Offline, late usage, event times & billing periods
+
+**Five distinct timestamps (PROPOSED):**
+
+| Field | Meaning / authority |
+|---|---|
+| `client_occurred_at` | Device-observed action time; untrusted clock with offset/clock skew metadata |
+| `server_committed_at` / `effective_at` | Authoritative backend business transition acceptance; can be later than device action; source-domain controlled |
+| `received_at` | First durable receipt by backend/Billing inbox |
+| `rated_at` | Pricing version applied and rated charge computed |
+| `posted_at` | Immutable ledger commit time; must never be backdated |
+| `billing_period_key` | Separately stored attributed period selected by approved period policy (not automatically `posted_at`) |
+
+Candidate month policies (all **OPEN**): **A** server-effective month, potentially reopen prior month with controlled adjustment; **B** first receipt month, easier close but deviates from economic occurrence; **C** device occurred month only after server validation, with bounded accepted clock skew (limits OPEN); **D** hybrid: pre-close effective month, post-close current-month correcting adjustment referencing original. **Preferred review candidate: D with server-authoritative effective timestamp**; not APPROVED. Store `original_period_key`, `posting_period_key`, `adjustment_reason`, `source_event_id` and `original_charge_id?` to prevent silent retrospective edits. Month close, invoice finalization, late cutoff, discount accumulation and version selection OPEN. Never silently re-open immutable finalized invoice.
+
+**End-of-month example (illustrative, not policy):** device creates operation at local 31st 23:58; sync received 1st 09:00; server accepts transition 1st 09:01; pricing 1st 09:02; ledger posts 1st 09:03. Device time, authoritative business time, ingestion month and posting month differ. Under option A/B/C/D, liability and discount tiers can differ; choose only after Mobile/Sales/Backend sign-off. Offline device does not charge, reserve stock or post to SaaS ledger; server acceptance is a precondition. If server rejects command, no economic event. This aligns with [Mobile Stock and Billing](MOBILE_ARCHITECTURE.md) and [ADR-MOB-008](../adr/ADR-MOB-008.md).
+
+### 19.4 MR-02 — One calendar month negative-balance timeline
+
+**Only APPROVED invariant:** when balance is exhausted, actual Seat/Business Usage/Resource Usage debits may continue negative for **one calendar month**; **never** estimate a debt ceiling / remaining credit cap. A **calendar month** is not silently equated to rolling 30 days.
+
+| Timeline step | Data/state candidate | Open business decision |
+|---|---|---|
+| T0 balance reaches zero or below | Ledger records actual debit and `first_negative_at` | Trigger on crossing zero, at 0 exactly, or first negative; whether partial previous debt carries |
+| T1 month window assigned | `negative_period_id`, `calendar_month_key`, timezone policy version | Start of current month to month-end **vs** next full calendar month **vs** one calendar-month anniversary interval; what “bir kalendar oy” means |
+| T2 subsequent real usage/Seat | Continue posted actual charges; negative value derived, **no forecast ceiling** | Late events belonging before/after window, seat accrual frequency |
+| T3 refill / positive recovery | Verified top-up journal entry and reconciled balance | Does refill close/reset window? What if partial top-up leaves balance negative? |
+| T4 expiry | `expiry_at`, action pending | Notification, permitted read/write actions, grace, collections, whether to suspend; **not approved** |
+| T5 later recovery / repeat crossing | Linked successor periods and historical audit | New window eligibility, unpaid past-period charges, delayed adjustments |
+
+**Candidate interpretations:** month-to-month anniversary with calendar arithmetic; current named calendar month until its last instant; next named whole calendar month. No variant may silently become APPROVED. Persist timezone ID, `period_policy_version`, `period_start_at`, `period_end_at` using half-open intervals; server converts to UTC instants. Example: an October 28 deficit and a November 2 delayed event require separate event-attribution and grace-window decisions; **neither** forecast ceiling nor arbitrary automatic shutdown allowed. Wallet balance, grace eligibility and legal invoice due date are distinct concepts. Delay, renewal, top-up and expiry require joint business approval before service-enforcement code.
+
+### 19.5 MR-03 — Seat activation, prorating and identity
+
+**PROPOSED source contract:** IAM/Identity emits membership events (`invited`, `accepted`, `activated`, `suspended`, `reactivated`, `removed`) with `tenant_id`, `company_id?`, `membership_id`, `user_id`, `role/scope?`, `effective_at`, `transition_id`, `source_version`; Billing computes `billable_seat_snapshot` by approved statuses and effective dates. Account/branch liability uses AR-001 mapping snapshot, not a guessed tenant mapping. Membership may span branches: avoid counting same purchased seat twice without explicit plan policy.
+
+| Seat scenario | Option A | Option B | Status |
+|---|---|---|---|
+| Invite pending | Not billable until acceptance/activation | Billable at invitation | OPEN |
+| Activation | Bill from activation (prorated) | First full billing interval | OPEN |
+| Suspension | Stop accrual at suspension | Still bill reserved seat | OPEN |
+| Mid-period join/leave | Calendar-day prorate | Instant-based prorate or full interval | OPEN |
+| Multiple branches/devices | One company/tenant membership seat | Distinct scoped seats | OPEN |
+| Seat discounts | Pricing tier after measured active seats | Enterprise contract seat override before discount | OPEN |
+
+**Idempotency proposal:** unique `(tenant_id, membership_id, transition_id)` for state input; unique `(billing_account_id, membership_id, seat_period_key, charge_component_version)` for periodic economic charge (or interval ID for prorating). Replayed `activated` transition must not reset `effective_at` or add duplicate bill. Corrections reference original accrual/charge and preserve prior posting. Proration fractions use fixed-precision, explicit timezone, leap/month boundary handling and deterministic rounding **after** pricing policy approval. Billing period and discount tier base must be independently approved. Identity remains membership source of truth; Billing owns rating, not IAM role policy.
+
+### 19.6 MR-04 / MR-05 — Volume, resource, discount and pricing conflict gates
+
+**Approved:** document base price + extra charge above threshold; progressive discounts; enterprise individualized pricing. **OPEN:** billable document types/transitions, row/count/bytes/units measure, threshold inclusive/exclusive boundary, volume measurement on update, resource resource_type/units, zero/free allowance, rounding credit granularity, progressive tiers and measuring time window.
+
+**PROPOSED pricing evaluation graph (subject to contract approval):** validate authenticated tenant/company & event → resolve legal/payer account assignment snapshot → resolve document/resource/seat eligibility → select effective immutable `pricing_version` based on chosen billable date → calculate base and over-threshold components → choose contract override precedence → calculate progressive discount per approved tier algorithm → round deterministically → record full breakdown & post immutable ledger.
+
+| Discount/enterprise alternatives | Advantages | Risks / OPEN |
+|---|---|---|
+| Marginal progressive tiers | Gradual incremental tier price | Tier unit and scope/cumulative window OPEN |
+| Retroactive whole-volume tiers | Easy explanation in some tariffs | Threshold discontinuities and month-end re-rate OPEN |
+| Enterprise override replaces base tariff, then tier discount | Predictable custom contract price | Stacking may over-discount; precedence OPEN |
+| Enterprise fixed net price, no standard discount | Easier enterprise audit | May conflict with negotiated progressive benefits; OPEN |
+| Multiple contracts per billing account | Flexible | Overlap and priority need deterministic tie-breakers |
+
+Pricing snapshots must record `pricing_version_id`, `contract_id/version?`, `discount_policy_version`, `tier_calculation`, `measurement_source`, `rounding_policy`, `billing_period_key`, `charge_origin`. Historical posted entries never auto re-price, including offline arrivals; if adjustment policy approved, use linked immutable correction. **Do not invent numeric prices, thresholds, resource unit rates, prorations or effective dates.**
+
+### 19.7 Cross-domain approval gates and tests — NOT IMPLEMENTATION AUTHORIZATION
+
+- **AR-001:** Multi-Tenant + Billing + Finance approval for entity/account/legal payer and branch transfer. Test cross-company leakage and migration with debt/credits separate.
+- **AR-009:** Mobile + Sales/Backend + Billing approval for timestamps, skew, late-month cutoff and immutable adjustment. Test offline October→November replay, reversed operation, two devices same command, failed server acceptance, finalized invoice.
+- **AR-010:** Sales/Inventory + Billing + Integrations approve document type × transition matrix and correcting/reversal rules. Test confirm/dispatch/return duplication, cancellation after invoice, amended volume, imported documents.
+- **MR-02:** Business approval of exact one-calendar-month anchor, timezone, refill, expiry/recovery. Test boundary, partial refill, leap/month-length differences, non-authorized shutdown; no forecast credit limit.
+- **MR-03:** Identity + Billing + Business approve billable statuses, prorating cadence, seat scope, discounts. Test invite→activate→suspend→reactivate; simultaneous branches and duplicate events.
+- **MR-04/MR-05:** Business + Billing approve thresholds, resource dimensions, effective pricing/discount precedence, rounding. Test threshold crossing, tiers, enterprise overlaps, corrections after pricing change.
+- A user-facing UX should display pending sync, disputed/reversed charges, period distinction and balances understandably in **uz/en/ru**, while hidden future alphabet option remains supported. Usability is APPROVED; exact UI is PROPOSED.
+
+**Local ADR additions:** [ADR-BILL-009](../adr/ADR-BILL-009.md) (document charge boundary) and [ADR-BILL-010](../adr/ADR-BILL-010.md) (seat lifecycle/proration). ADR-BILL-001/003/004/006/007 are clarified to reference this section. All remain **PROPOSED** until user-approved.
