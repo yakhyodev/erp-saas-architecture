@@ -125,3 +125,25 @@ No code now. After explicit approvals Codex should deliver:
 8. Cross-module contract tests and load/security/recovery tests. Block cross-tenant/branch access; no duplicate visits/orders/POD/usage charges; never directly post ledger or stock from CRM; historical attribution remains immutable.
 
 **Definition of Ready:** ADR approvals, Party owner, access/branch model, route/visit/offline/GPS policy, Delivery vs Logistics owner, KPI/bonus rules, SalesDoc contract and Billing metering categories. This specification is NOT authorization to implement.
+
+## 11. Cross-module reconciliation: AR-002, AR-008, AR-011 (PROPOSED; 2026-10-12)
+
+**Authority boundary:** Quyidagi jadval yangi biznes qoida yoki `APPROVED` ADR emas. Ushbu hujjatning avvalgi bo‘limlaridagi keng talqinlar bilan farq bo‘lsa, amaliy implementatsiyada masala `OPEN_QUESTIONS.md` va yakuniy user approval orqali hal qilinadi.
+
+| Entity / fact | Candidate canonical writer | Other modules may do | Explicit OPEN question |
+|---|---|---|---|
+| Product, SKU, UoM, product hierarchy | Separate logical Catalog boundary in modular monolith | Sales references SKU; Inventory owns physical stock; CRM owns assortment/market relations; Purchasing references product | Tenant-global vs company-specific catalog, Catalog vs Sales container owner |
+| PriceList, applied price snapshot | Pricing boundary (proposal) | Sales snapshots price at order transition; CRM owns customer segment context | Pricing rules and company/branch scope |
+| SalesOrder and document lifecycle | Sales | CRM captures demand/visits; fulfillment coordinates Inventory | Approval vs posting/dispatch consequences |
+| StockMovement/StockReservation | Inventory | CRM shows authorized read-only availability | Stock policy and reservation TTL |
+| Counterparty/Party identity | **OPEN:** CRM-managed canonical Party registry versus independent shared Party context | Customer/Supplier/Outlet/Payer are role records and relationships; Finance owns AR/AP, not Party identity | Authoritative master, deduplication, legal identifiers, company visibility |
+| Customer/Outlet/Route/Visit | CRM & Distribution | Sales receives immutable references; Finance may map payer/receivable owner | Outlet legal entity versus delivery location; payer vs customer |
+| Payer, ReceivableOwner | **OPEN:** canonical Party role/reference mapping | Finance owns receivable and allocation ledger, Integration maps external payer ID | Inter-company payer and allocation policy |
+
+**Proposed Party contract:** `party_id` (immutable tenant-scoped) + `party_role` (customer, supplier, payer) + `outlet_id` (physical trade/sale point, not automatically a legal payer); external mapping uses `source_system + external_type + external_id -> canonical_id`, unique per tenant with audited merges and alias history. Never silently merge payable/receivable identities. Dedupe candidates require scoped review and preserve immutable sales and finance document references.
+
+**Integration evidence taxonomy:** `DOCUMENTED` means public provider documentation describes the feature, **not** that a live server was tested; `LIVE_VERIFIED` requires recorded endpoint/environment/test date/result; `INFERRED` is interpretation; `UNVERIFIED` has no sufficient evidence. The CRM adapter may read `DOCUMENTED` mappings without representing them as production-tested. No claim of live third-party API tests is made here.
+
+**Contract examples (PROPOSED):** `PartyLinkedToCustomer`, `OutletAssignedToAgent` and `ExternalCounterpartyMapped` events include tenant scope, immutable IDs, event version, idempotency key and source time. Finance creates its own ledger postings; CRM does not update AR/AP balances. Every authorized search or merge operation enforces tenant/company/branch grants.
+
+**Approval gate:** domain owners 00/04/05/06/07/12 must agree on one canonical Party and Catalog owner and versioned interfaces; user must approve any business consequence. AR-002 and AR-008 remain **OPEN**, AR-011's terminology is reconciled here as **PROPOSED**.
