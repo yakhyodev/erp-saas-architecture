@@ -25,3 +25,6 @@ Sales, Inventory, Mobile, Backend, Database.
 
 ## Qaror tartibi
 Foydalanuvchi alohida tasdiqlamaguncha PROPOSED. O'zgartirilsa eski ADR SUPERSEDED sifatida tarixda qoladi.
+
+## AR-009 / AR-010 clarification (PROPOSED)
+See [Billing §19.2–19.3](../modules/BILLING_ARCHITECTURE.md#192-ar-010--mr-04--document-type--transition--charge-policy). Distinguish source business transition ID, source revision, semantic billable occurrence ID and transport event ID. Suggested unique economic key combines tenant, producer, billable occurrence and charge component/version; retransmission of identical payload is replay-safe, mismatched payload is conflict. Offline device does not post charges; only accepted backend transition can qualify. Document create/confirm/post/finalize/return charge triggers and late usage period policy remain OPEN. Compensation event references original charge. Required tests: repeated import, duplicate device sync, amended document, two workers, out-of-order reversal.
