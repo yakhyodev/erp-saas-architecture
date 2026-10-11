@@ -25,3 +25,6 @@ Sales, Warehouse, Mobile.
 
 ## Tasdiqlash
 Bosh arxitektura, tegishli domen egalari bilan reviewdan keyin APPROVED qilinadi. Hozircha implementation mandate emas.
+
+## 2026-10-11 reservation policy clarification (PROPOSED)
+A: manual release/no expiry; B: configurable reservation TTL plus renewal; C: priority-aware adaptive expiry. No fixed TTL, priority, allocation trigger or offline extension APPROVED. Reservation acts on available, not physical on-hand; expiry/release must be atomic/idempotent and must never reverse a consumed/dispatched reservation. OPEN: auto reserve at confirm vs pick allocation; TTL, grace, reallocation fairness, disconnected device and warehouse scope. See [Sales §11](../modules/SALES_INVENTORY.md).
