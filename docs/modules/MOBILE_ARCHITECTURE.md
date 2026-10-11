@@ -57,3 +57,13 @@ Offline session TTL; payment evidence restrictions; price version rules; manifes
 
 ## Codex specification — architecture only
 Specify Flutter candidate component boundaries, local schema, sync push/pull contracts, command state machine, idempotency, auth/device security, GPS/media lifecycle, failure recovery, telemetry and test matrix. Do not generate Dart, SQL or backend code. Do not promote proposals to APPROVED.
+
+## Architecture Review reconciliation — AR-006 and AR-009 (PROPOSED)
+
+- AR-006: [ADR-MOB-004](../adr/ADR-MOB-004.md) documents conflict handling and durable idempotency; [ADR-MOB-009](../adr/ADR-MOB-009.md) documents authentication, offline device security and permission revocation. Both remain **PROPOSED**.
+- Every queued command is reauthenticated and reauthorized against current tenant membership, branch/assignment, device status and operation permissions **when the backend processes it**. Offline access never guarantees future server acceptance. Revoked scope: reject, audit, quarantine/clean up local data under Security policy.
+- Conflict outcomes: accepted; rejected_validation; rejected_permission; conflict_version; conflict_business; retryable. Timeout is unknown, not accepted. Preserve the stable operation_id for safe retries; no universal last-write-wins or automatic stock/finance/billing posting.
+- **AR-009 — OPEN QUESTION, joint owner Mobile + Billing:** preserve distinct `client_occurred_at` (untrusted device timestamp), `server_received_at`, `server_accepted_at` (if accepted), server-generated chargeable lifecycle timestamp and the eventual `rated_calendar_month`. Keep original timestamps for audit; do not infer the billing month from mobile clock.
+- **Attribution options, none approved:** (A) month of the domain-approved business occurrence, subject to trusted server evidence and late-event adjustment; (B) month of server acceptance/chargeable lifecycle transition; (C) month of server receipt with correction/reversal policy. Compare month boundaries, timezone, offline delays, duplicates, reversals, month close and backdated adjustments with Billing.
+- Billing owns charge trigger (AR-010), calendar-month/timezone attribution, rating, discounts, corrections and one-month negative balance accounting. Mobile only delivers deduplicated evidence/commands and does not charge locally. No option is approved or selected here.
+- Relevant central review registers: [DECISIONS.md](../../DECISIONS.md) and [OPEN_QUESTIONS.md](../../OPEN_QUESTIONS.md). The central review items remain open until owners formally close them.
