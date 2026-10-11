@@ -290,3 +290,78 @@ Loading skeleton mazmun shaklini saqlaydi; kechikishda progress va aniq xato/ret
 - UX testlar real foydalanuvchida `time-to-find`, completion, 2–3 navigation action reachabilityni qayd etadi; boshlang'ich bazaviy qiymatlar uydirilmaydi.
 
 **Codexga topshiriladigan ish:** hozir frontend kodi emas, ushbu spetsifikatsiyadan kelib chiqib foydalanuvchi oqimlari, permission-state matrix, IA va ekran inventarini tekshirish va o'zaro modullar bilan moslashtirish. Implementatsiya faqat alohida ruxsatdan so'ng.
+
+## 16. AR-012 UX Quality Gate — MR-16/MR-17/MR-20
+
+**Status: PROPOSED, NOT APPROVED.** This is an acceptance specification, not a measured success result or approved MVP list. BIZ-001…010 user-approved business constraints preserved. Outstanding ownership and scope decisions remain OPEN. References: [DECISIONS](../../DECISIONS.md), [OPEN QUESTIONS](../../OPEN_QUESTIONS.md), [REGISTRY](../../MODULE_REGISTRY.md), [REVIEW](../reviews/ARCHITECTURE_REVIEW.md).
+
+### 16.1 Candidate persona × top-20 workflow acceptance matrix (MR-16)
+
+Personas are examples, not an approved RBAC grant. All candidate tasks require desktop and mobile review; mobile capability/offline availability is not implicitly promised. Discovery/launch goal is at most 2–3 deliberate interactions from Today, dashboard or global search, NOT completion of multi-step business workflows. Domain owners define actual transitions. Every workflow needs permitted and denied test cases; this matrix has not passed usability testing.
+
+| ID | Candidate persona | Business workflow | Entry/path | Observable acceptance / forbidden case | Domain owners |
+
+|---|---|---|---|---|---|
+
+| UX-T01 | Sotuvchi | Yangi sotuv | Today > Yangi sotuv > mijoz/mahsulot > review | Draft/final farqlansin; narx xatosi finalni bloklaydi | Sales, CRM |
+| UX-T02 | Sotuvchi | Buyurtma topish | Global search > order > detail | Faqat vakolatli natija va detal; foreign ID ko‘rinmasin | Sales, Security |
+| UX-T03 | Sotuvchi | Qaytarish/bekor qilish | Buyurtma > actions > sabab | Faqat ruxsatli transition; reversal Finance/Sales tasdiqlaydi | Sales, Finance |
+| UX-T04 | Omborchi | Kirim qabul | Today > kirim > inspect/post | Miqdor, ombor va xato ko‘rinsin; noto‘g‘ri posting bloklansin | Inventory |
+| UX-T05 | Omborchi | Omborlararo transfer | Stock > Transfer > destination | Cross-tenant destination ko‘rinmasin; filial huquqi qayta tekshirilsin | Inventory, Security |
+| UX-T06 | Omborchi | Inventarizatsiya | Task > count > discrepancy | Farq, approval va audit ko‘rinsin; silent adjust yo‘q | Inventory |
+| UX-T07 | Omborchi | Kam qoldiq | Alert > SKU > action | Filialga tegishli SKU/foydali keyingi amal, stale alert belgisi | Inventory |
+| UX-T08 | Sotuvchi | Mijozni topish/yaratish | Search > mijoz > create/edit | Dublikat va scope aniq; AR-008 identity OPEN | CRM |
+| UX-T09 | Agent | Mijoz tashrifi | Today > route > customer > visit | GPS/evidence statuslari, offline/pending aniq | CRM, Mobile |
+| UX-T10 | Agent | Offline buyurtma | Customer > order draft > sync queue | Local saved server accepted degani emas; retry ko‘rinsin | Mobile, Sales |
+| UX-T11 | Ekspeditor | Yetkazish dalili | Manifest > stop > foto/imzo | Upload pending va server receipt farqlansin | Mobile, Inventory |
+| UX-T12 | Buxgalter | Debitor to‘lovi | AR > customer > receipt | Draft/settled va allocation; erta GL posting yo‘q | Finance |
+| UX-T13 | Buxgalter | Kreditor to‘lovi | AP > bill > approval | Tasdiq, partial payment va reversal tushunarli | Finance |
+| UX-T14 | Buxgalter | Bank reconciliation | Bank > unmatched > match | Mismatch, source, audit va qaytarish oqimi | Finance |
+| UX-T15 | Buxgalter | Moliyaviy hisobot | Dashboard > reports > P&L/AR | As-of date, scope va export huquqi | Finance, Security |
+| UX-T16 | Direktor | Filiallar kesimi KPI | Dashboard > branch context > KPI | All-branch faqat explicit ruxsat bilan | Tenant, Security |
+| UX-T17 | Direktor | Savdo exception | Alert > exception > next action | Revoked permissiondan keyin action ishlamasin | Sales, Security |
+| UX-T18 | Administrator | Xodim ruxsati | Settings > member > role | Grant/revoke authorized, audit, stale-refresh | Security, Tenant |
+| UX-T19 | Administrator | SaaS balans/usage | Billing > ledger > charge | Seat/Business/Resource va 1 kredit=10 UZS; haqiqiy minus xarajat, taxminiy limit emas | Billing |
+| UX-T20 | Administrator | Balans to‘ldirish | Billing alert > top-up > status | Pending!=settled; duplicate va payment failed ko‘rinsin | Billing |
+
+**Common per-row test contract (PROPOSED):** persona and actual membership, tenant/company/branch scope, desktop/mobile device, uz/en/ru locale, online/degraded/offline state, initial domain state, expected server-accepted outcome, blocked/unauthorized outcome, UI status and recovery, clicks/time/errors, accessible interaction, evidence link, and domain-owner signoff. A draft/queued result must never be reported as posted/settled. Signed-off MVP device and role coverage remains OPEN.
+
+### 16.2 Active context and cross-tenant/branch safeguards
+
+**PROPOSED:** persistent current tenant/company/branch label, explicitly authorized All-branches mode only. On switch, server revalidates membership and action; scope-bound search, suggestions, recents, counts, cards, notification previews, pending requests, download links and cached results are hidden/invalidated before showing new context. In-flight response from prior scope cannot repaint current screen. URL/deep link is an untrusted locator, not authority; inaccessible objects reveal neither title nor existence. Prompt before abandoning unsaved draft; offline queued commands stay irrevocably associated with original scope, never reassign on switch. Tenant/Company/BillingAccount cardinality AR-001 and identity ownership AR-013 are OPEN. Negative tests: revoked membership mid-session, switched branch during request, bookmarked foreign record, shared-device user switch, stale offline queue, All-branches without grant, same-number document in different tenants.
+
+### 16.3 Authorized global search — MR-17
+
+**PROPOSED:** a single entry point for product, customer, document, order, payment, employee and separate labeled commands. Authorization filters apply to query results AND autosuggest, facets/counts, autocomplete, snippets, recent items, history, saved queries, notifications, exports and detail navigation. No unauthorized item identifiers, existence hints, aggregate counts or thumbnails leak; detail/action always rechecks server scope. Cache keys include tenant, membership/scope and authorization version; revocation invalidates stale results. Index records carry scope and deletion/version information. Reindex is resumable, tenant-scoped, auditable and must suppress stale/revoked records; explicit freshness/partial-results states when lag matters. Test typo/apostrophe and language/script aliases without altering originals. **OPEN:** index ownership, index-lag budget, reindex capacity, permission side-channel policy and search Resource Usage classification (Database/Security/Localization/Billing owners).
+
+### 16.4 Onboarding and workflow-first error recovery
+
+**PROPOSED:** first-run role-relevant Today checklist, contextual help and searchable All functions catalogue. Basic/advanced mode is presentation only, not permission. Every guided flow shows task purpose, current step, back/exit, validation, optional draft resume and authoritative confirmation. Define distinct loading, empty, no-permission, offline, queued, syncing, accepted, rejected, conflict, retryable timeout and unknown server outcome states. Offline new order/visit/evidence is only local pending until server validates; no implied offline final stock reservation, GL posting, settlement or SaaS charge. Retry stable operation identity; show server conflict with domain-approved resolution. Device logout/revocation blocks sending pending work until reauthorization. Billing charge boundary AR-010 and offline rating month AR-009 remain OPEN. See Mobile and Billing.
+
+### 16.5 Localization, accessibility and quantitative measurement — MR-20
+
+**APPROVED:** uz/en/ru public interface and internal-only hidden future Uzbek alphabet. **PROPOSED test protocol:** each prioritized flow validated in three public languages, varied content lengths, number/currency/date/time-zone independence, Uzbek apostrophe/search alias, original record preservation; hidden alphabet only flagged internal preview, not a public option. WCAG 2.2 AA target for core workflow: keyboard-only, screen reader manual walkthrough, labeled form validation, focus/dialog/announcements, contrast/color independence, zoom/reflow, minimum usable touch targets, reduced motion, status readable without color. Automated audit alone does not prove compliance.
+
+**Quantitative targets PROPOSED only, not measured:** discover/start frequent task in <=3 deliberate user interactions; LCP p75 <=2.5 s; INP p75 <=200 ms; CLS p75 <=0.1; typical authorized search/filter p75 <=1 s under defined network/dataset. Report per persona/device/locale the completion rate, p50/p75/p95 time, steps, wrong turns, abandonment, retry recovery and inaccessible conditions. Validate against genuinely comparable tasks and consented observations; do not claim Sales Doctor superiority without measured baseline.
+
+**OPEN:** top-20 MVP ordering, role/desktop-mobile feature coverage; low-end Android/desktop spec, browser/screen-reader profile, offline duration, 3G/4G/Wi-Fi profile, dataset/tenant sizes, concurrency, statistical sample, exact acceptance thresholds and instrumentation privacy. UX, Mobile, Localization, Security, Infra and Master must sign off profiles before metrics become binding.
+
+### 16.6 UX Quality Gate exit checklist and cross-module ownership
+
+| Gate | PROPOSED evidence | Owner / unresolved |
+
+|---|---|---|
+
+| G0 Task scope | User/domain-approved top-20 and role/device matrix | Master, Sales, Finance, Billing, CRM — OPEN MR-16 |
+
+| G1 Safe context/search | Auth denial tests for switching, cached results, search counts, recents, deeplinks | Tenant, Security, UX — OPEN AR-013/MR-17 |
+
+| G2 Valid business flow | 20 positive and forbidden workflows with actual server state and error recovery | Sales/Inventory, Finance, Billing, CRM — OPEN AR-005/008/010 |
+
+| G3 Mobile recovery | Offline, sync conflict, device revoke, stale scope and partial uploads | Mobile, Security — OPEN AR-009 |
+
+| G4 Inclusive UX | uz/en/ru, desktop/mobile, a11y manual/automated runs | Localization, Mobile, UX — OPEN MR-20 |
+
+| G5 Evidence | Per-task observed metrics, device/network profile and reproducible evidence | UX, Infra, QA — OPEN MR-16/20 |
+
+**No gate is marked passed:** these are PROPOSED test contracts. Implementation readiness remains BLOCKED per architecture review. Shared registries were NOT edited. Proposed future registry delta: record AR-012 matrix/quality gate as PROPOSED; keep MR-16/17/20, AR-001/005/008/009/010/013 OPEN. Domain references: [Sales](SALES_INVENTORY.md), [Finance](FINANCE_ARCHITECTURE.md), [Billing](BILLING_ARCHITECTURE.md), [Security](SECURITY_ARCHITECTURE.md), [Mobile](MOBILE_ARCHITECTURE.md), [Localization](LOCALIZATION_ARCHITECTURE.md).
