@@ -10,3 +10,7 @@
 - **Sabab:** moslik va himoya.
 - **Xavf:** permission tizimiga kuchli bog'liqlik, cache eskirishi.
 - **Ta'sir:** Auth/RBAC, tenant scope, search, offline.
+
+## AR-012 active-context acceptance — PROPOSED
+
+Role is presentation, not permission. Tenant/company/branch switch reauthorizes and invalidates cached cards, counts, suggestions, recents, files and in-flight views before repaint. Offline pending commands never migrate scope. Denied deep links, revoked membership and unauthorized All-branches must reveal no foreign record. User/owner decisions AR-001 and AR-013 remain OPEN. See [UX §16](../modules/UX_ARCHITECTURE.md), [Security](../modules/SECURITY_ARCHITECTURE.md), [Mobile](../modules/MOBILE_ARCHITECTURE.md).
