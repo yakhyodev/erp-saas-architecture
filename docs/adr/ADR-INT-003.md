@@ -5,22 +5,22 @@
 - Owner: Integration Architecture
 
 ## Muammo
-Unverified source semantics and incomplete history make direct import risky.
+External source semantics, history completeness and deletion behavior are not fully verified.
+
+## Proposed migration contract
+Stages:
+DISCOVERED → STAGED → VALIDATED → MAPPED → ACCEPTED → POSTED → RECONCILED → ARCHIVED.
+
+Each stage records source provenance, contract version, evidence level, checkpoints and reconciliation results.
+
+## Rollback evidence
+Cutover requires snapshot/checkpoint, reconciliation evidence and owner acceptance. Rollback must prevent duplicate documents.
 
 ## Variantlar
-Direct upsert; raw DB copy; read-only staged import with reconciliation.
+Direct import; raw copy; staged migration.
 
-## Taklif etilgan yechim
-Phased read-only discovery, staged validation, source traceability and signed cutover.
+## PROPOSED yechim
+Read-first staged migration.
 
-## Sabab
-Auditability, reversibility and domain ownership.
-
-## Xavflar
-Storage and human approval workload.
-
-## Boshqa modullarga ta'siri
-Finance, Inventory, CRM, UX.
-
-## Qaror sharti
-Owning domain review required; no implementation authorization. See [main architecture](../modules/INTEGRATION_ARCHITECTURE.md).
+## Status
+No live migration performed or verified.
