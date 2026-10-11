@@ -1,0 +1,27 @@
+# ADR-BILL-007 — Marginal progressive discount tiers
+
+- **Status:** PROPOSED
+- **Date:** 2026-10-11
+- **Scope:** Billing Architecture
+- **Business-rule authority:** APPROVED biznes invariantlari [Billing module](../modules/BILLING_ARCHITECTURE.md) da; bu ADR texnik usulni tasdiqlamaydi.
+
+## Muammo
+Progressiv chegirma haddan o'tganda qanday qo'llanadi?
+
+## Ko'rilgan variantlar
+All-volume retroactive tier; marginal tier; flat discounts.
+
+## Tanlangan yechim (taklif)
+PROPOSED: marginal bracket-by-bracket tiers with saved per-tier breakdown. Progressive discounts themselves APPROVED, mechanism not.
+
+## Sabab
+Limitda keskin chegirma sakrashini kamaytiradi, hisob tushunarli.
+
+## Xavflar va ochiq masalalar
+Thresholds, discount order, enterprise combination va period OPEN.
+
+## Boshqa modullarga ta'siri
+Pricing, Enterprise Contracts, Billing Reports.
+
+## Qaror tartibi
+Foydalanuvchi alohida tasdiqlamaguncha PROPOSED. O'zgartirilsa eski ADR SUPERSEDED sifatida tarixda qoladi.
