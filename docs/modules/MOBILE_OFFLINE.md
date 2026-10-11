@@ -21,3 +21,11 @@ Encrypted local DB and media; OS key storage; bounded offline session; server-si
 
 ## ADRs
 See [Mobile ADR registry](MOBILE_ARCHITECTURE.md#adr-registry).
+
+## AR-006 — conflict and revoked-permission recheck (PROPOSED)
+
+See [ADR-MOB-004](../adr/ADR-MOB-004.md) and [ADR-MOB-009](../adr/ADR-MOB-009.md). On every queued-command processing attempt, the server must recheck active identity, tenant membership, branch/assignment, device status and operation permission. A prior offline authorization does not override revocation. Responses distinguish version conflict, business conflict, validation rejection, permission rejection and retryable error. Timeout does not mean success; reuse stable operation_id and retain draft for review. No last-write-wins for ledger/stock/billing.
+
+## AR-009 — delayed usage month attribution (OPEN QUESTION)
+
+Preserve `client_occurred_at` (untrusted), `server_received_at`, `server_accepted_at`, trusted chargeable lifecycle time when defined, and final `rated_calendar_month`. Possible billing attribution: occurrence month with auditable corrections; server acceptance/chargeable transition month; server receipt month with correction policy. **None approved.** Billing and Sales must settle charge trigger (AR-010), timezone, month closing, late events, duplicate/replay, reversal and adjustment rules. Mobile does not rate usage or change approved one-calendar-month negative balance policy.
