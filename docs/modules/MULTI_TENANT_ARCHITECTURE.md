@@ -98,3 +98,81 @@ Domenlar: TenantRegistry, Tenant, Company, Branch, Membership, ScopeGrant contra
 - `CHANGELOG.md`: 2026-10-11, proposed Multi-Tenancy + ADR-MT-001/002.
 
 Related ADRs: [Isolation & Placement](../adr/ADR-MT-001.md) · [Hierarchy & Membership](../adr/ADR-MT-002.md).
+
+
+---
+
+## 15. Cross-module harmonization — AR-001 / MR-01 (2026-10-11, PROPOSED)
+
+**Manbalar:** root `DECISIONS.md`, `REQUIREMENTS.md`, `MODULE_REGISTRY.md`, `OPEN_QUESTIONS.md`; `docs/reviews/ARCHITECTURE_REVIEW.md` faqat tarixiy audit baseline. **Status: OPEN QUESTION — quyidagi mapping hech biri APPROVED emas.**
+
+### 15.1 Atamalar va relational boundaries
+
+| Entity | Tavsiya etilgan ma'no (PROPOSED) | Identifikator / ownership | Cardinality bo‘yicha holat |
+|---|---|---|---|
+| Tenant | Application data isolation va placement boundary | tenant_id: Multi-Tenant | Tenant ↔ Company: OPEN |
+| Company | ERP operatsion tashkilot va scope | company_id; tenant_id bilan domain binding: Multi-Tenant / Finance review | Tenant ↔ Company: 1:1 yoki 1:N OPEN |
+| LegalEntity | Yuridik/moliya-huquqiy hisob birligi, Company bilan aynan sinonim emas | legal_entity_id: Finance master ownership kandidati | Company ↔ LegalEntity: 1:1 yoki N:1 yoki vaqtli mapping OPEN |
+| Branch | Operatsion bo‘linma (Companyga qarashli) | branch_id, parent_company_id; scope mapping | Company ↔ Branch: 1:N taklifi; companysizlik filiallarga munosabat OPEN |
+| BillingAccount | SaaS bo‘yicha majburiyat, invoice va tarifikatsiya targeti | billing_account_id: Billing authoritative | Tenant/Company ↔ BillingAccount: OPEN |
+| Wallet | Kredit mablag‘lari va minus (qarz) ledger asosiy hisobi | wallet_id: Billing authoritative | BillingAccount ↔ Wallet: 1:1, 1:N, pooled OPEN |
+
+**Cardinality alternativlari:**
+- **A — sodda single-company:** 1 Tenant ↔ 1 Company ↔ 1 LegalEntity; Company 1:N Branch; Tenant 1:1 BillingAccount ↔ 1 Wallet. Migratsiya oson, lekin multi-company tenantni cheklaydi.
+- **B — tenant-level consolidated:** Tenant 1:N Company, Company 1:1 LegalEntity (taxmin), Company 1:N Branch; Tenant 1:1 BillingAccount ↔ 1 Wallet. Filial va company usage bir hisobga yig‘iladi; legal entityga xarajat qayta ajratish savoli OPEN.
+- **C — flexible payer:** Tenant 1:N Company; Company ↔ LegalEntity mustaqil aniq mapping; Tenant 1:N BillingAccount; har BillingAccount 1 yoki N Wallet (variant); Company/Branch → BillingAccount mapping effective-dated. Murakkabroq, enterprise uchun mos; debt ownership aniq kelishilmaguncha joriy etilmaydi.
+- **D — per-company billing:** Tenant 1:N Company, har Company 1:1 BillingAccount; BillingAccount 1:1 Wallet; umumiy Seat va resurslarning taqsimlash formulasi OPEN.
+
+**Invariant sifatida tavsiya (PROPOSED, tasdiqlanmagan cardinalityga bog‘liq emas):** referential tenant isolation; company/branchning tenantga tegishliligi tekshiriladi; legal entity va payer mapping vaqtli/auditlangan bo‘lishi mumkin; billing account/wallet IDlarni tenant IDdan chiqarib bo‘lmaydi; wallet balance hujjati Multi-Tenancy tomonidan yozilmaydi; bir usage faktidan bir nechta charge asossiz tug‘ilmaydi.
+
+**Tasdiqlangan monetizatsiya cheklovi:** Hybrid Prepaid; Seat + Business Usage + Resource Usage; har hujjat asosiy narx + hajmdan keyingi qo‘shimcha kredit; 1 kredit = 10 UZS; progressiv/enterprise chegirma. Balans tugaganda **faqat haqiqiy Seat/Usage xarajatlari bir kalendar oy** minusga yoziladi, taxminiy limit yo‘q. Bu qoidalar wallet sonini, qarzning huquqiy egasini yoki month anchorini o‘z-o‘zidan tanlamaydi.
+
+**AR-001 user/Billing/Finance decision gate:** yuridik to‘lovchi kim? Bitta tenant bir nechta yuridik shaxsni qamraydimi? Filial alohida payer bo‘la oladimi? Wallet per billing accountmi yoki pooled? Umumiy seat/resource usage qaysi payerga ajratiladi? Effective-dated payer switch va old qarzni kim ko‘taradi? Javob kelmaguncha barcha alternativlar OPEN.
+
+### 15.2 Cross-company billing attribution (PROPOSED contract, pricing emas)
+
+Operatsion faktlarda `tenant_id`, `source_company_id?`, `source_branch_id?`, `actor_user_id?`, `membership_id?` saqlanadi; server `branch.company_id` va `company.tenant_id` mosligini tekshiradi. `billable_subject_type/id` va `billing_account_id` faqat Billingdagi effective-dated, vakolatli mappingdan aniqlanadi (yoki mapping yo‘q bo‘lsa billing pending/reconciliationga tushadi); client tomonidan wallet/billing account tanlash trusted emas. Cross-company charge splitting/konsolidatsiya Billingda rate/allocate qilinadi; tenant boundary orqali cross-tenant pooling default emas. `source_document_id` qayta ishlatilganida idempotency saqlansin.
+
+**Event proposal `UsageFactRecorded.v1`:** `event_id`, `schema_version`, `tenant_id`, `source_company_id?`, `source_branch_id?`, `source_entity_type`, `source_entity_id`, `actor_user_id?`, `membership_id?`, `occurred_at`, `recorded_at`, `quantity`, `unit`, `dimension`, `idempotency_key`, `correlation_id`, `causation_id?`, `reversal_of_event_id?`, `placement_epoch?`. Billing returns `Rating/ChargeAccepted|Rejected|Pending` correlated by event_id; event acceptance is not a guarantee that document is chargeable. Calendar-month attribution, backdated/offline eventlar, refund/adjustment, document charge trigger = Billing/Sales/Mobile OPEN (AR-009/010). Financial debit, debt period, discount and ledger are **Billing-owned**.
+
+### 15.3 Contract proposals (implementatsiya emas)
+
+| Interface | Owner (candidate) | Kirish/chiqish contract | Fail behavior |
+|---|---|---|---|
+| Identity.Authenticate | Identity/Security | identity credential → principal/user_id and verified session | unauthenticated |
+| TenantMembership.Resolve | Multi-Tenant (candidate) | user_id + tenant_id → active membership/version | deny |
+| Security.Evaluate | Security (candidate) | principal + membership + tenant/company/branch/resource + action + policy_version → allow/deny/reason | deny |
+| Tenant.ResolveScope | Multi-Tenant | company_id/branch_id → same tenant and valid company relation | deny |
+| TenantRegistry.ResolvePlacement | Multi-Tenant/Infra | tenant_id → placement + epoch, internal-only | fail closed |
+| Billing.ResolvePayer | Billing | tenant, company, branch, event_time → billing_account_id / unresolved | pending, no guessed wallet |
+| Billing.AcceptUsageFact | Billing | event envelope → accepted/pending/duplicate/rejected | idempotent |
+| Database.TenantTransaction | DB/Backend | verified tenant context, transaction-scoped RLS identity | refuse missing/mismatch |
+
+Contract versionlari, exact endpoint nomlari, delivery ordering va security token formatlari **PROPOSED**; Backend/API review zarur. UX tenant/company/branch switcher access manbai emas.
+
+## 16. AR-013 — membership, credential va permission authority (PROPOSED)
+
+**Ownership candidate (yakuniy APPROVED emas):**
+1. **Identity/Auth** credentials, MFA, sessions va global principal `user_id`ning authoritative egasi.
+2. **Multi-Tenant** Tenant/Company/Branch registry, user↔tenant membership lifecycle (membership_id, state, version)ning authoritative kandidati; `user_id` credential nusxasi emas.
+3. **Security** RoleAssignments, grants/delegations, permission catalog/policy version va `PermissionEvaluation` authoritative kandidati. Har bir business module esa o‘z resursining ownership/scopeini authoritative aniqlab, evaluation natijasini **server-side** qo‘llaydi.
+4. **Billing** SaaS Seat uchun qaysi membership/user hisoblanishi, proration va payer attribution owneri; membershipning mavjudligi **o‘zidan-o‘zi billable Seat deyilmaydi**.
+
+**Lifecycle proposal:** invited → active → suspended → revoked; invited/expired userga access bermaydi; revoke terminal, re-join uchun yangi membership yoki explicit reactivation policy (OPEN). Membership aktiv bo‘lsa ham user session invalid, tenant suspended yoki grant yo‘q bo‘lsa deny. Membership/role/scope version o‘zgarsa cache/session authorization re-check qilinadi. Har tenant switchda new verified context; company/branch change hech qanday latent role escalationsiz. Pending invitation identity bo‘lmasa ham minimal PII va expiry bilan yuritiladi (Identity/Security review). Service principals, delegation, emergency support access va invitation accept identity-merge OPEN.
+
+**Ambiguity (MODULE_REGISTRY conflict):** global registry Securityni “identity, membership, RBAC/ABAC” deb yozgan; old module “membership reference” deydi. Candidate A: Multi-Tenant membership state authority, Security permission authority (tavsiya); B: Security membership authority, Multi-Tenant tenancy graphning read modelini ushlab turadi. Ikki joyda writable membership source of truth bo‘lishi mumkin emas. AR-013 **OPEN** qoladi.
+
+## 17. MR-11 — tenant isolation va privileged access (PROPOSED controls)
+
+- Server-side principal→tenant membership→scope→resource ownership verification; permission check har request, job, stream, export, search, reportda majburiy. Deny-by-default, metadata yoki counts orqali cross-tenant leak ham taqiqlansin.
+- Pooled PostgreSQL **shared schema + RLS** faqat PROPOSED. Tenant-owned jadvallarda tenant key va `USING`/`WITH CHECK` siyosati; runtime role table owner/superuser/BYPASSRLS bo‘lmaydi. Owner role ishlatilsa FORCE RLS risk review; migration/admin credentials runtime/APIga ochilmaydi.
+- Connection pooling: tenant context faqat transaction-local va transaction oxirida yo‘q; invalid/missing context deny. Prepared statements, connection reuse, async jobs, retries, search/cache va bulk operations negative testdan o‘tishi kerak.
+- Privileged break-glass: default disabled, explicit approved workflow, just-in-time, reason/ticket, narrow scope, audit trail, review/expiry; bypass RLS uchun application superuser mexanizmi yaratmaslik.
+- Routing: registry source of truth + placement_epoch fencing; stale cache/unknown placement deny; pooled/dedicated movementda single-writer; snapshot verification, export/import, cutover, idempotency, rollback va backup/restore drills. Dedicated DB yoki per-tenant restore RPO/RTO default va'da emas.
+- DB isolation, tenant mobility/restore, privileged access final approval faqat Database, Security, Infra va Master bilan ADR sign-offdan keyin; **MR-11 OPEN**.
+
+## 18. Codex handoff gate (faqat specification, kod yozilmasin)
+
+**BLOCKED until decisions:** AR-001 payer/cardinality/debt owner; AR-013 membership authority; MR-01 legal entity mapping; MR-11 DB isolation/migration/restore; AR-009/010 billing time/charge triggers. Kod generatsiyasi yoki migrationni bu taklif bilan boshlamaslik. Approvaldan keyingi acceptance scenarios: tenant X cannot inspect Y even through ID guessing/cache/search/report/object storage; membership revoke works across active sessions; role revocation forces deny; cross-company scopes enforce resource ownership; billable event unique/deduplicated; unresolved payer never auto-charges guessed wallet; pooled-connection reuse never leaks tenant context; placement switch does not duplicate ledger events; privileged access auditable; recovery does not restore data to wrong tenant.
+
+Cross-module root registry synchronization **faqat taklif**: DECISIONS'da ADR-MT-001/002 PROPOSED; OPEN_QUESTIONS'da AR-001/013 va MR-01/11 unresolved gates; REQUIREMENTS'da isolation/event acceptance proposals; MODULE_REGISTRY'da authority alternatives. **Bu fayllar ushbu commit bilan o‘zgartirilmaydi.**
