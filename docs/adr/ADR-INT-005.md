@@ -5,22 +5,21 @@
 - Owner: Integration Architecture
 
 ## Muammo
-Ordinary vs contragent server changes which party owns payments and debt.
+External systems may distinguish payer, counterparty and outlet differently.
+
+## AR-008 contract proposal
+Transactions should reference explicit roles:
+- payer;
+- counterparty;
+- outlet/sales point.
+
+Canonical ownership is unresolved. This ADR does not approve a CRM/Finance model.
 
 ## Variantlar
-Flatten clients; mirror source server-mode flag; separate payer and sale point.
+Flatten identities; mirror provider mode; separate roles.
 
-## Taklif etilgan yechim
-Represent payer and sale point separately on affected transactions, subject to Finance and CRM approval.
+## PROPOSED yechim
+Preserve roles and source mappings while awaiting CRM + Finance approval.
 
-## Sabab
-Avoid source-specific accounting assumptions, preserve both models.
-
-## Xavflar
-Duplicates, orphan payer and debt mismatch.
-
-## Boshqa modullarga ta'siri
-CRM, Finance, Sales, Multi-Tenant.
-
-## Qaror sharti
-Owning domain review required; no implementation authorization. See [main architecture](../modules/INTEGRATION_ARCHITECTURE.md).
+## Status
+OPEN dependency on AR-008.
