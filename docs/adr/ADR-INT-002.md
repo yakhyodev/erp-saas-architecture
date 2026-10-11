@@ -5,22 +5,22 @@
 - Owner: Integration Architecture
 
 ## Muammo
-CS_id, SD_id, code_1C are not necessarily globally unique across branches/source servers.
+CS_id, SD_id and code_1C cannot be assumed globally unique.
+
+## Proposed contract
+External identity key scope:
+Tenant + Provider + Connection + Source Server + Filial + Entity Type + Identifier Type + Identifier Value.
+
+Conflicts MUST quarantine. Silent merge is forbidden.
+
+## AR-008 relation
+Payer, counterparty and outlet identity mapping remains OPEN. Identity registry stores mappings but does not decide business ownership.
 
 ## Variantlar
-External ID as primary key; source composite as PK; internal ID with mappings.
+External IDs as primary keys; source composite keys; immutable ERP IDs with mapping.
 
-## Taklif etilgan yechim
-Internal immutable IDs plus scoped tenant/provider/connection/server/branch/entity/ID mappings; quarantine collisions.
+## PROPOSED yechim
+Immutable ERP IDs plus scoped external identity mapping.
 
-## Sabab
-Safe migration and avoiding accidental cross-tenant merges.
-
-## Xavflar
-Complex mapping, manual conflict review.
-
-## Boshqa modullarga ta'siri
-Database, Multi-Tenant, CRM, Catalog.
-
-## Qaror sharti
-Owning domain review required; no implementation authorization. See [main architecture](../modules/INTEGRATION_ARCHITECTURE.md).
+## Status
+Requires Database, Multi-Tenant, CRM and Finance review.
