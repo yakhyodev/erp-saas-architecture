@@ -22,3 +22,6 @@ Backend, Integration, Mobile, Billing.
 
 ## Qaror sharti
 Security, tegishli modul va Master Architecture muvofiqlashtirilgandan keyingina APPROVED bo‘lishi mumkin. Hozircha hech qanday kod yoki migratsiya yozilmaydi.
+
+## AR-013/AR-006 server-guard contract — PROPOSED
+All HTTP, sync, job, file and export operations resolve active identity/session/device, active tenant membership/version, branch graph and grants/policy version; authorize current resource/action server-side immediately before side effects. Client-provided tenant ID is a requested selector, not authority. Switching tenant cannot carry permissions from prior tenant. Offline command operation_id idempotent and original device time untrusted; revoked devices/memberships reject rather than post charges/stock/GL. Timeout unknown; retry same operation_id. Device auth strategy/MFA/TTL and mobile response taxonomy joint Security/Mobile/Backend OPEN.
