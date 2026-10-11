@@ -296,3 +296,27 @@ Fayllar bevosita o'zgartirilmagan; boshqa hujjatlarga qo'shishdan oldin ular ich
 ## 16. Reference notes
 
 Texnologik imkoniyatlarni tekshirish uchun rasmiy qo'llanmalar: Go `database/sql` transactions and context cancellation (https://go.dev/doc/database/), OpenTelemetry Go documentation (https://opentelemetry.io/docs/languages/go/). Reference mavjudligi tanlovni APPROVED qilmaydi.
+
+## 17. Cross-module ownership and command/event reconciliation — PROPOSED (2026-10-12)
+
+This section clarifies AR-002, AR-005, AR-013 and MR-10 by aligning with the latest Catalog/CRM/Sales/Finance/Database/Security proposals; it does not independently approve an unapproved business or platform decision.
+
+| Fact / aggregate | Candidate authoritative write boundary | Read/reference consumers | Approval question |
+|---|---|---|---|
+| Product/SKU/UoM | Separate logical Catalog boundary (within modular monolith); Pricing separately owns PriceList | Sales, Inventory, Purchasing, CRM, Integrations | Tenant-global vs company catalog and final module container OPEN |
+| SalesOrder and commercial document | Sales | Inventory, Finance, Billing, CRM | Billable lifecycle boundary and invoice transition OPEN |
+| StockMovement and StockReservation | Inventory | Sales orchestration, Purchasing, Finance valuation | Negative-stock and reservation policy OPEN |
+| Finance Journal/AR/AP | Finance | Sales uses outcome references, CRM reads authorized balances | GL posting on dispatch vs invoice based on agreed policy OPEN |
+| Party/Counterparty, Outlet, Payer | Party canonical master owner **OPEN** (CRM vs shared Party context); CRM owns customer relationships/outlets | Finance owns receivables and payer allocations; Integrations external mapping | Merge/legal entity/customer role mapping OPEN |
+| User credentials and session | Identity | All request contexts | MFA/SSO details OPEN |
+| TenantMembership and Company/Branch membership context | Tenant & Organization (candidate) | Security policy evaluation, Backend context resolution | Exact membership and role cardinality OPEN |
+| Role grants, policy and permission evaluation | Security (candidate) | Backend always enforces on server, UX displays hints only | Scope inheritance and revoke timing OPEN |
+| Subscription, UsageEvent and SaaS Wallet | Billing | Domain services emit source facts but never debit wallet | BillingAccount cardinality and usage month OPEN |
+
+**Commands vs facts (PROPOSED):** `ConfirmSalesOrder` writes a commercial state and may request StockReservation, not a physical stock debit. `PostDispatch` writes an idempotent Sales dispatch fact, Inventory posts exactly one stock movement; `IssueInvoice` writes immutable invoice fact and Finance posts at the explicit, still OPEN recognition trigger. `RecordUsage` is a Billing-owned command caused by a versioned chargeable domain fact, never by UI button clicks alone. Cancellation/return generates a linked compensating fact; original ledgers are append-only.
+
+**Contracts:** Commands require `tenant_id`, authorized `company_id/branch_id` as applicable, `actor_id`, `expected_revision`, `idempotency_key`, `request_fingerprint`, `causation_id`, `correlation_id` and validated domain input. Events carry `event_id`, `type`, `schema_version`, tenant scope, canonical aggregate IDs, UTC occurrence/commit timestamps and immutable effect references. Separate outbox and consumer dedup/ordering protect retries; each domain persists authoritative effects atomically within its own owned transaction. Cross-domain workflows needing strict atomicity must share an explicitly designed transaction owner; asynchronous paths require reconciliation and do not promise impossible distributed exactly-once execution.
+
+**Authorization invariant:** Identity verifies principal; Tenant authenticates active membership and verified organization context; Security evaluates versioned grants; application commands reject stale/revoked scope; database RLS is proposed defense-in-depth, not a substitute for application authorization. Off-device sync must re-authorize upon server reception.
+
+**Open approvals:** real financial posting transitions, wallet/account cardinality, canonical Catalog/Party ownership, permission inheritance and event-schema compatibility/retention. These remain marked OPEN in the central registry and are never upgraded to APPROVED here.
