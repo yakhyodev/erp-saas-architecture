@@ -25,3 +25,6 @@ Pricing, Enterprise Contracts, Billing Reports.
 
 ## Qaror tartibi
 Foydalanuvchi alohida tasdiqlamaguncha PROPOSED. O'zgartirilsa eski ADR SUPERSEDED sifatida tarixda qoladi.
+
+## MR-03 / MR-05 clarification (PROPOSED)
+See [Billing §19.5–19.6](../modules/BILLING_ARCHITECTURE.md#196-mr-04--mr-05--volume-resource-discount-and-pricing-conflict-gates). Progressive discount principle APPROVED, marginal tier algorithm PROPOSED only. OPEN: tier window, marginal vs retroactive tiers, seat discount applicability, enterprise override order, stacking and rounding. Record immutable rate components and tier breakdown with each charge; replays and corrections never silently rerate historical posted records.
