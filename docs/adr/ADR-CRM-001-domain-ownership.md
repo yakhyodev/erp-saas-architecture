@@ -10,7 +10,7 @@ CRM, Sales, Finance, Tenant and Billing may duplicate party, order, receivable a
 All-in-one data ownership; modular bounded contexts; immediate microservices.
 
 ## Proposed decision
-CRM owns customer relations and outlets; canonical Counterparty ownership still needs alignment with Finance and Purchasing. Sales owns products, orders, inventory and fulfillment; Finance owns receivables, ledger and payments; Tenant/Identity owns membership and credentials; Billing owns wallet, seat and usage prices. Interactions use canonical IDs, tenant checks and explicit command/event contracts.
+CRM owns customer relations, outlets, route/visit evidence and agent assignments. Canonical Counterparty/Party ownership remains **OPEN** between CRM and a separate shared logical Party context, to be aligned with Finance/Purchasing. **Reconciled PROPOSED domain map:** a Catalog boundary owns canonical Product/SKU/UoM; Pricing owns PriceList; Sales owns order/commercial document lifecycle and fulfillment orchestration; Inventory owns stock, reservation and movement ledger; Purchasing owns purchase documents; Finance owns receivables, ERP GL and payments; Tenant manages scoped membership lifecycle, Identity credentials, Security roles and permission evaluation (final mapping OPEN); Billing owns SaaS wallet, seat and usage rating. Interactions use immutable canonical IDs, verified tenant scope, and versioned commands/events. Historical draft wording grouped Product and Inventory under Sales; this is superseded as a **proposal only** by the separate-domain recommendation above.
 
 ## Rationale
 Avoid inconsistent masters while supporting modular-monolith deployment.
