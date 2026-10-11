@@ -148,3 +148,8 @@ ADR tafsilotlari `../adr/` da saqlanadi. Hozircha ushbu ADRlar **APPROVED emas**
 Codex implementatsiya boshlashdan oldin: (1) approved biznes qoidalarni o‘zgartirmasligi; (2) texnik takliflarni approvalsiz final qaror qilmasligi; (3) tenant/security enforcementni chetlab o‘tmasligi; (4) domain-owned write model chegaralarini saqlashi; (5) Billing va business Finance ledgerlarni ajratishi; (6) uz/en/ru va hidden locale talablarini ta'minlashi; (7) cross-module breaking changega ADR taklif qilishi; (8) microservice va shardingni o‘lchovlarsiz majburiy deb olmasligi kerak.
 
 **Ushbu hujjat master arxitekturaning taklif versiyasidir; boshqa chatlarning qarorlari audit qilinmagan.**
+
+
+## 15. Cross-module reconciliation pointer — 2026-10-11
+
+The central registries [REQUIREMENTS.md](../../REQUIREMENTS.md), [DECISIONS.md](../../DECISIONS.md), [MODULE_REGISTRY.md](../../MODULE_REGISTRY.md), [OPEN_QUESTIONS.md](../../OPEN_QUESTIONS.md) and [CHANGELOG.md](../../CHANGELOG.md) are separate governance documents. Their initial version catalogs 13 user-supplied 14-audit gaps **AR-001..AR-013**, all **OPEN QUESTION** with review owners and proposed alternatives. **No cross-domain ownership, financial lifecycle, HA level, API verification level, billing charge trigger or membership authority is newly approved by this linkage.** Original decisions and historical ADR statuses remain unchanged; FIN-001's reported APPROVED label has missing independent approval provenance, tracked under AR-004. This section supplements, not supersedes, the historical master content above.
