@@ -5,22 +5,29 @@
 - Owner: Integration Architecture
 
 ## Muammo
-External SalesDoc request/ID semantics might leak into ERP core.
+External provider semantics, IDs and transport models must not leak into ERP domains.
+
+## Taklif etilgan contract
+Provider adapter owns:
+- authentication envelope;
+- transport errors and rate limits;
+- provider contract version;
+- evidence level (DOCUMENTED/LIVE_VERIFIED/INFERRED/UNVERIFIED);
+- normalized output for domain services.
+
+Domain modules own business validation and posting decisions.
 
 ## Variantlar
-Direct calls from each module; full source-schema mirror; shared adapter/ACL.
+Direct module connectors; source API mirror; anti-corruption adapter.
 
-## Taklif etilgan yechim
-Shared provider-neutral adapter plus canonical owner-domain commands.
-
-## Sabab
-Separation, consistency and future provider extensibility.
+## Tanlangan PROPOSED yechim
+Provider-neutral adapter with versioned canonical import/command contracts.
 
 ## Xavflar
-Mapping cost, potential central orchestration bottleneck.
+Mapping complexity and central orchestration growth.
 
-## Boshqa modullarga ta'siri
+## Ta'sir
 Backend, CRM, Sales, Inventory, Finance, Security.
 
-## Qaror sharti
-Owning domain review required; no implementation authorization. See [main architecture](../modules/INTEGRATION_ARCHITECTURE.md).
+## Status
+No implementation authorization. Requires domain review.
