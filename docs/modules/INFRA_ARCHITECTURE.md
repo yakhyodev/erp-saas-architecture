@@ -179,3 +179,19 @@ Cloud vendor/region; data residency; peak concurrency and largest tenant; cost b
 9. Scaling decision uses measured service limits; Kubernetes, Redis and replicas are not default prerequisites.
 
 **Approval gate:** all five infra ADRs require cross-module review and explicit approval before becoming binding technical decisions.
+
+## 18. Cross-module reconciliation: AR-003 / MR-14 / MR-15 (PROPOSED, 2026-10-12)
+
+**Matched with [Database Architecture §17](DATABASE_ARCHITECTURE.md) and [ADR-DB-007](../adr/ADR-DB-007.md):** Production stage *choice* is still OPEN pending user requirements; an early initial-standby suggestion is retained as an optional alternative, not a mandatory APPROVED policy.
+
+| Stage | Topology proposal | Recovery / availability claim | Advance gate |
+|---|---|---|---|
+| A — cost-conscious starting option | One PostgreSQL writer; isolated encrypted offsite base backups + continuous WAL archive/PITR; recurring restore drills | Recovery-capable **but not high availability**; outage during writer failure | Only after user accepts measured restore downtime / availability trade-off |
+| B — stronger availability option | Writer + physical standby, health checks, controlled promotion, stable writer endpoint, fencing | Potentially faster service recovery; must measure actual failover, replication lag and no split-brain | Approved SLO/RPO/RTO, verified promotion/rollback and budget |
+| C — later evolution | Automated supervised failover, read replicas where stale reads permitted, bounded pools and optional tenant placement | Explicit failover tests and capacity data required | Sustained measured load and operational staffing |
+
+**Non-negotiable proposed tests before production:** protect and periodically restore WAL chain offsite; perform simulated primary loss, test rollback and split-brain fencing if Stage B; measure recovery time/data loss and compare *only to approved objectives*; verify ledger consistency, stock reconciliation and tenant isolation after recovery; establish alert ownership, restore authorization, credential separation, incident process and retention/legal hold policy. None of these tests are represented as already executed.
+
+**MR-14/MR-15 OPEN:** acceptable downtime, RPO/RTO, availability SLO, restore frequency, retention, residency, expected peak tenants/transactions and connection budget. No numerical target or provider is approved by this document.
+
+**Impact:** 03 Database, 04 Backend, 02 Multi-Tenant, 10 Security, Billing/Finance/Inventory and 00 Master. The prior AR-003 *textual* disagreement is reconciled at the PROPOSED stage; selection of launch topology remains an explicit user/business decision.
