@@ -1,0 +1,57 @@
+# DECISIONS.md
+
+- **Version:** 0.1 (2026-10-11)
+- **Scope:** central cross-module registry; source main and user-provided 14-module audit
+- **Governance:** APPROVED user business rules are binding; proposals are not approvals; missing provenance remains unresolved.
+- **Source:** [Master Architecture](https://github.com/yakhyodev/erp-saas-architecture/blob/main/docs/modules/MASTER_ARCHITECTURE.md)
+
+## APPROVED — direct user business decisions
+
+| ID | Decision | Status | Provenance |
+|---|---|---|---|
+| BIZ-001 | Hybrid Prepaid SaaS monetizatsiyasi | APPROVED | User project instructions / explicit user statements |
+| BIZ-002 | Arzon Seat + Business Usage + Resource Usage | APPROVED | User project instructions / explicit user statements |
+| BIZ-003 | Business Usage hujjatga asosiy narx; hajm chegarasidan so‘ng qo‘shimcha kredit | APPROVED | User project instructions / explicit user statements |
+| BIZ-004 | 1 kredit = 10 UZS | APPROVED | User project instructions / explicit user statements |
+| BIZ-005 | Progressiv hajm chegirmalari va enterprise individual shartnomalar | APPROVED | User project instructions / explicit user statements |
+| BIZ-006 | Balans yetmaganda faqat haqiqiy Seat va Usage xarajatlari bir kalendar oy davomida minusga yoziladi | APPROVED | User project instructions / explicit user statements |
+| BIZ-007 | Minus balans uchun taxminiy kredit limiti hisoblanmaydi | APPROVED | User project instructions / explicit user statements |
+| BIZ-008 | Kompaniyalar va filiallar yagona SaaS platformasida | APPROVED | User project instructions / explicit user statements |
+| BIZ-009 | uz/en/ru interfeyslar va kelajakdagi yangi o‘zbek alifbosi uchun yashirin variant | APPROVED | User project instructions / explicit user statements |
+| BIZ-010 | Foydalanish qulayligi asosiy platforma maqsadi | APPROVED | User project instructions / explicit user statements |
+
+## PROPOSED — technology and overarching ADRs
+
+| ID | Decision | Status | Details |
+|---|---|---|---|
+| TECH-001 | Initial modular monolith; clearly-owned domains | PROPOSED | [Master](https://github.com/yakhyodev/erp-saas-architecture/blob/main/docs/modules/MASTER_ARCHITECTURE.md) |
+| TECH-002 | Go backend | PROPOSED | [Master](https://github.com/yakhyodev/erp-saas-architecture/blob/main/docs/modules/MASTER_ARCHITECTURE.md) |
+| TECH-003 | PostgreSQL transactional store | PROPOSED | [Master](https://github.com/yakhyodev/erp-saas-architecture/blob/main/docs/modules/MASTER_ARCHITECTURE.md) |
+| TECH-004 | Next.js web | PROPOSED | [Master](https://github.com/yakhyodev/erp-saas-architecture/blob/main/docs/modules/MASTER_ARCHITECTURE.md) |
+| TECH-005 | Flutter mobile | PROPOSED | [Master](https://github.com/yakhyodev/erp-saas-architecture/blob/main/docs/modules/MASTER_ARCHITECTURE.md) |
+| TECH-006 | Tenant-aware isolation model; dedicated enterprise path | PROPOSED | Exact cardinality, DB boundary unresolved |
+| TECH-007 | Measured multiserver and selective microservice extraction | PROPOSED | No fixed extraction date |
+| TECH-008 | Billing module owns SaaS usage rating, not ERP GL | PROPOSED | Boundaries subject to AR-001/009/010 |
+
+## Historical status / provenance exception
+
+- **FIN-001** — audit reports `APPROVED` in the Finance ADR, but independent explicit approval provenance has not been established (**AR-004 OPEN QUESTION**). **Do not silently downgrade, upgrade, or rewrite the original ADR.** This registry preserves the reported status as `APPROVED (provenance unverified)`, pending source-of-truth review; this is *not* a new approval.
+- Other module ADR statuses require individual source verification. The 14-audit count (108 Markdown files, 90 ADRs) is an audit snapshot, **not** a fresh exhaustive inventory confirmation.
+
+## OPEN QUESTION register
+
+- **AR-001** — Tenant / Company / BillingAccount / Wallet cardinality; owner: 02 Multi-Tenant + 01 Billing; see [OPEN_QUESTIONS.md](https://github.com/yakhyodev/erp-saas-architecture/blob/main/OPEN_QUESTIONS.md).
+- **AR-002** — Catalog / Product ownership; owner: 05 Sales & Inventory + 07 CRM; see [OPEN_QUESTIONS.md](https://github.com/yakhyodev/erp-saas-architecture/blob/main/OPEN_QUESTIONS.md).
+- **AR-003** — Initial database HA divergence; owner: 03 Database + 11 Infrastructure; see [OPEN_QUESTIONS.md](https://github.com/yakhyodev/erp-saas-architecture/blob/main/OPEN_QUESTIONS.md).
+- **AR-004** — FIN-001 APPROVED provenance missing; owner: 06 Finance & Accounting + 00 Master; see [OPEN_QUESTIONS.md](https://github.com/yakhyodev/erp-saas-architecture/blob/main/OPEN_QUESTIONS.md).
+- **AR-005** — Sales / Stock / GL lifecycle trigger matrix; owner: 05 Sales & Inventory + 06 Finance; see [OPEN_QUESTIONS.md](https://github.com/yakhyodev/erp-saas-architecture/blob/main/OPEN_QUESTIONS.md).
+- **AR-006** — ADR-MOB-004 / ADR-MOB-009 missing; owner: 09 Mobile & Offline; see [OPEN_QUESTIONS.md](https://github.com/yakhyodev/erp-saas-architecture/blob/main/OPEN_QUESTIONS.md).
+- **AR-007** — Missing root global registries; owner: 00 Master Architecture; see [OPEN_QUESTIONS.md](https://github.com/yakhyodev/erp-saas-architecture/blob/main/OPEN_QUESTIONS.md).
+- **AR-008** — Party / Counterparty / Payer / Outlet master; owner: 07 CRM & Distribution + 06 Finance + 05 Sales; see [OPEN_QUESTIONS.md](https://github.com/yakhyodev/erp-saas-architecture/blob/main/OPEN_QUESTIONS.md).
+- **AR-009** — Offline delayed usage calendar-month rating; owner: 09 Mobile & Offline + 01 Billing; see [OPEN_QUESTIONS.md](https://github.com/yakhyodev/erp-saas-architecture/blob/main/OPEN_QUESTIONS.md).
+- **AR-010** — Chargeable document lifecycle; owner: 01 Billing + 05 Sales & Inventory; see [OPEN_QUESTIONS.md](https://github.com/yakhyodev/erp-saas-architecture/blob/main/OPEN_QUESTIONS.md).
+- **AR-011** — External API evidence levels; owner: 12 Integrations & API + 10 Security; see [OPEN_QUESTIONS.md](https://github.com/yakhyodev/erp-saas-architecture/blob/main/OPEN_QUESTIONS.md).
+- **AR-012** — UX workflow acceptance; owner: 08 UI/UX + 09 Mobile; see [OPEN_QUESTIONS.md](https://github.com/yakhyodev/erp-saas-architecture/blob/main/OPEN_QUESTIONS.md).
+- **AR-013** — Identity / membership / permissions ownership; owner: 10 Security & Permissions + 02 Multi-Tenant; see [OPEN_QUESTIONS.md](https://github.com/yakhyodev/erp-saas-architecture/blob/main/OPEN_QUESTIONS.md).
+
+Status transitions require user approval, record of evidence, superseding ADR (if changing an approved contract) and coordinated registry updates.
