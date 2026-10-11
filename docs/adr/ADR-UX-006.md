@@ -10,3 +10,7 @@
 - **Sabab:** xodimning qurilma almashtirganda qayta o'rganmasligi.
 - **Xavf:** mobile murakkab jadval, offline/assistive tech edge case.
 - **Ta'sir:** Mobile/Offline, Localization, Frontend, QA.
+
+## MR-20 responsive/a11y evidence — PROPOSED
+
+Same business task taxonomy on desktop/mobile, adaptive layout and explicitly marked offline availability. Distinguish draft, offline queued, accepted, rejected, conflict and revoked credentials. Proposed WCAG 2.2 AA manual+automated checks: keyboard/focus, screen-reader error/status, zoom/reflow, contrast, accessible tables/dialogs and touch targets. Public locales uz/en/ru; future alphabet remains hidden internal. p75 LCP <=2.5s, INP <=200ms, CLS <=0.1 and discovery <=3 interactions are targets only, never measured success. Device/network/sample and acceptable completion thresholds OPEN MR-20. See [UX §16](../modules/UX_ARCHITECTURE.md), [Mobile](../modules/MOBILE_ARCHITECTURE.md), [Localization](../modules/LOCALIZATION_ARCHITECTURE.md).
