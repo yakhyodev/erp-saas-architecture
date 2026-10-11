@@ -200,7 +200,7 @@ Mantiqiy bog‘liqlik real fizik FK degani emas: masalan SaaS billingning Sales 
 
 ## 9. Replication, availability, backup/restore — PROPOSED (DB-007)
 
-**Initial:** primary + physical streaming standby (HA); optional asynchronous read replica katta hisobot oqimi paydo bo‘lganda. Primary write source; replicas read-only va lag monitor qilinadi; failover orkestratsiyasi, fencing/split-brain prevention va idempotent client reconnection talab etiladi. Replica zero-data-loss yoki doimiy up-to-date read kafolati emas. Synchronous replication faqat latency/availability tradeoff baholangach.
+**Initial (PROPOSED staged option, not approved):** Stage A runs a single PostgreSQL primary with verified encrypted offsite WAL/PITR recovery, **not HA**. Stage B adds a streaming standby plus controlled failover and fencing when availability objectives justify it. A standby from day one was an earlier alternative, not an approved invariant. See §17 and Infrastructure §7; RPO/RTO remain OPEN.
 
 **Backup:** avtomatik base backup + uzluksiz WAL archival + **PITR**, encrypted and offsite copies, backup immutability/access segregation, restore tests. `RPO`, `RTO`, backup retention va geografik compliance muddatlari **OPEN QUESTION**; raqamlar ixtiyoriy o‘rnatilmaydi.
 
@@ -368,3 +368,25 @@ Expand -> backfill -> verify -> switch reads/writes -> contract. Long-running bl
 **Acceptance gates:** no cross-tenant access or composite FK bypass; no double wallet debit/top-up; no double journal/sale posting; no stock oversell under configured negative-stock rule; posted ledgers auditable/reconcilable; restore tested; all unresolved choices flagged `OPEN QUESTION` and not silently invented.
 
 **Do not assume:** tenant=company, price/discount numbers, negative-stock allowance, RPO/RTO numerical objectives, immediate partition/shard, replica strong consistency, or that a proposed technology/ADR is APPROVED.
+
+## 17. Cross-module reconciliation — AR-003 / AR-005 / MR-11 (PROPOSED; 2026-10-12)
+
+**AR-003—PostgreSQL initial HA:** Database va [Infrastructure §7](INFRA_ARCHITECTURE.md) quyidagi bosqichli **PROPOSED** modelda matn jihatdan moslashtirildi. **Stage A** — single writer PostgreSQL primary + encrypted offsite backups + continuous WAL archival/PITR + isolated, verified restores; **bu HA emas** va primary node yo‘qolsa availability uzilishi mumkin. **Stage B** — monitored streaming standby, writer endpoint, controlled promotion, fencing/split-brain prevention, failover drills when approved SLO/RPO/RTO requires it. **Stage C** — automatic failover and replica/read routing when justified. Oldingi birinchi kundan standby talab qiluvchi PROPOSED variant tarixan ko‘rib chiqilgan, lekin majburiy boshlang‘ich topologiya sifatida olinmaydi. **User OPEN:** desired production availability/RPO/RTO, budget, managed provider, DR/retention; no numerical SLO invented. Note Stage A is a recommendation pending approval.
+
+**AR-005—document/event → effects (NOT APPROVED business policy):**
+
+| Source transition / command | Sales or Purchasing authoritative write | Inventory physical effect | Finance ERP GL/AR effect | SaaS Billing usage |
+|---|---|---|---|---|
+| Order DRAFT/SUBMITTED | Commercial document and revision | None | None by default | Billability trigger OPEN |
+| Order CONFIRMED | State + reservation request | Possible reserved balance only; **no physical decrement** | No GL posting assumed | Chargeability OPEN |
+| Dispatch POSTED | Idempotent dispatch fact | **Once**: StockMovement debit source (+ transit if transfer); StockBalance in same ACID unit | Domain fact sent for Finance policy; GL recognition trigger OPEN | Chargeability OPEN |
+| GoodsReceipt POSTED | Purchase receipt fact | **Once**: StockMovement increment qualified bucket | Supplier/AP posting timing OPEN | Chargeability OPEN |
+| Invoice ISSUED | Immutable invoice fact | No second stock movement | Invoice/AR/GL posting once if Finance policy requires | Chargeability OPEN |
+| Payment ALLOCATED | Finance owns cash/allocation | None | Idempotent Finance allocation | SaaS billing unrelated to ERP cash |
+| RETURN / REVERSAL POSTED | Linked correction fact | Separate compensating movement; never modify original ledger | Reversal/credit note via Finance policy | Correct/reverse usage only per approved Billing rule |
+
+**Atomicity proposal:** one command writes all entities it *owns* and the transactional outbox in the same ACID transaction. Do not require a single cross-domain or cross-database distributed transaction. Consumers in Inventory/Finance/Billing use distinct idempotency scopes, causation/event references and deterministic retry; same commercial event must never double-decrement stock nor double-charge SaaS wallet. Each domain owns authoritative posting; publish event *after* commit via outbox. Final financial recognition and Billing charge triggers are OPEN and must be approved before implementation.
+
+**MR-11—tenant isolation acceptance:** tenant-scoped FK `(tenant_id, entity_id)`, app-level authorization, transaction-local RLS context where selected, connection-pool reuse isolation, worker/export/search/object-store isolation and tenant placement routing contract must be tested for cross-tenant leakage. Shared schema + RLS remains PROPOSED, not an approved database deployment mandate.
+
+**Cross-module gate:** coordinate with 05 Sales, 06 Finance, 01 Billing, 02 Multi-Tenant, 10 Security, 11 Infrastructure. AR-003 proposal mismatch now documented coherently; final HA approval OPEN. AR-005 finance posting trigger and chargeable lifecycle still OPEN.
