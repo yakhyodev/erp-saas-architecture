@@ -25,3 +25,6 @@ IAM, Tenant, Notifications, Legal, Support.
 
 ## Qaror tartibi
 Foydalanuvchi alohida tasdiqlamaguncha PROPOSED. O'zgartirilsa eski ADR SUPERSEDED sifatida tarixda qoladi.
+
+## AR-009 / MR-02 negative-balance clarification (PROPOSED)
+See [Billing §19.3–19.4](../modules/BILLING_ARCHITECTURE.md#194-mr-02--one-calendar-month-negative-balance-timeline). APPROVED: actual Seat/Usage charges for **one calendar month** in minus, no estimated ceiling. Calendar-month meaning, timezone, first-negative trigger, end, partial refill, service expiry and repeat crossing remain OPEN. Suggested half-open start/end and versioned timezone/period policy only after approval. Offline late event must preserve event effective period and immutable posted_at separately. Do not equate calendar month to 30 rolling days, do not forecast/debt-cap or silently suspend at month end.
