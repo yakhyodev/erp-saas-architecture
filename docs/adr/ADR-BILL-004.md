@@ -25,3 +25,6 @@ Billing, Enterprise Contracts, Reporting, Finance.
 
 ## Qaror tartibi
 Foydalanuvchi alohida tasdiqlamaguncha PROPOSED. O'zgartirilsa eski ADR SUPERSEDED sifatida tarixda qoladi.
+
+## MR-04 / MR-05 and late event clarification (PROPOSED)
+See [Billing §19.5–19.6](../modules/BILLING_ARCHITECTURE.md#196-mr-04--mr-05--volume-resource-discount-and-pricing-conflict-gates). Pricing snapshot includes eligibility policy, effective-dated contract, base/over-threshold volume rule, resource unit, discount window/tier algorithm, rounding, and original/posted period links. **OPEN** whether late offline event uses server-effective, received, validated device occurrence, or controlled adjustment period; choosing price version cannot precede this policy. Enterprise precedence and stackability are OPEN; no invented numerical tiers or discount.
