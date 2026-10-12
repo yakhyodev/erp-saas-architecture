@@ -153,3 +153,16 @@ Codex implementatsiya boshlashdan oldin: (1) approved biznes qoidalarni o‘zgar
 ## 15. Cross-module reconciliation pointer — 2026-10-11
 
 The central registries [REQUIREMENTS.md](../../REQUIREMENTS.md), [DECISIONS.md](../../DECISIONS.md), [MODULE_REGISTRY.md](../../MODULE_REGISTRY.md), [OPEN_QUESTIONS.md](../../OPEN_QUESTIONS.md) and [CHANGELOG.md](../../CHANGELOG.md) are separate governance documents. Their initial version catalogs 13 user-supplied 14-audit gaps **AR-001..AR-013**, all **OPEN QUESTION** with review owners and proposed alternatives. **No cross-domain ownership, financial lifecycle, HA level, API verification level, billing charge trigger or membership authority is newly approved by this linkage.** Original decisions and historical ADR statuses remain unchanged; FIN-001's reported APPROVED label has missing independent approval provenance, tracked under AR-004. This section supplements, not supersedes, the historical master content above.
+
+
+## 16. Round 2 authoritative coordination addendum (2026-10-12; PROPOSED)
+
+**Evidence:** [Round 2 Architecture Review](../reviews/ARCHITECTURE_REVIEW_ROUND_2.md) based on historical audited commit `184b32f7b3dcc9ce8d329ca2dfb7895f06cae905`. Auditor verdict **BLOCKED**; nothing here overrides existing APPROVED business rules or FIN-001 provenance exception. Sections 1–15 above remain historical and their older tracking instructions must be interpreted together with v0.2 central registries, not as fresh status claims.
+
+**Single cross-module dependency and ownership map:** the authoritative *coordination proposal* is maintained once in [MODULE_REGISTRY — Global dependency graph](../../MODULE_REGISTRY.md). This replaces diagram duplication for current design review; diagrams in §3 remain conceptual history. Candidate Catalog/Product/SKU, Pricing, Sales, Inventory, Purchasing, CRM Party/Outlet, Finance AR legal payer, TenantMembership, Identity/Credentials, RoleAssignment and PermissionEvaluation have distinct writers, while alternatives and contradictions remain OPEN.
+
+**Corrections:** AR-006 Mobile ADR-004/009 exist, status **PROPOSED**, device/TTL/revocation policies remain OPEN. AR-007 all five root registry files exist; registry consistency work is not fully closed. [MR-01…20](../../OPEN_QUESTIONS.md) records evidence, owner, type, dependencies and next action; [97 ADR status/provenance index](../../DECISIONS.md) records 96 PROPOSED + FIN-001 tagged APPROVED but original approval source UNVERIFIED.
+
+**Mandatory product invariant:** UX/UI must make *all ERP workflows* understandable, efficient and accessible. UX acceptance matrices are PROPOSED and NOT_TESTED, not measured performance claims. **MVP inclusion/exclusion for HR, Manufacturing, Purchasing, Reporting remains OPEN** (MR-18). No module mention is scope approval. Go/PostgreSQL/Next.js/Flutter/modular monolith/HA levels remain PROPOSED.
+
+**Open conflicts not silently settled:** AR-001 wallet/cardinality; AR-002 Catalog scope; AR-004 FIN provenance; AR-005 DB §6 vs §17 transaction semantics; AR-008 Party/Payer; AR-009 late offline rating; AR-010 doc charge trigger; AR-013 TenantMembership writer conflict. These require owner/user decisions; do not initiate coding under Round 2 BLOCKED verdict.
