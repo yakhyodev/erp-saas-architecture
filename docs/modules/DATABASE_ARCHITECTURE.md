@@ -164,11 +164,7 @@ Mantiqiy bog‘liqlik real fizik FK degani emas: masalan SaaS billingning Sales 
 
 **General:** ACID tranzaksiyalar qisqa bo‘ladi; network/payment gateway kabi tashqi chaqiriqlar DB lock ichida bajarilmaydi. Odatda `READ COMMITTED` + explicit row-level lock/conditional update; stock contention yoki period close uchun zarur bo‘lsa selectively stronger isolation + bounded retries. Deadlockni kamaytirish uchun lock order bir xil, lock timeout/statement timeout va retry siyosati. `SERIALIZABLE` ni hamma operatsiyaga global majburlash taklif etilmaydi.
 
-**Sotuv posting atomiklik (bitta tenant va DB ichida):**
-1. Tenant/actor/branch permission va request idempotency tekshiruvi.
-2. Document status/version tekshiruvi, kerakli stock balance/reservation qatorlarini tartibli lock qilish.
-3. SalesDocument posting + StockMovement + StockBalance/Reservation transition + zarur Finance journal posting + OutboxEvent bitta DB transaction ichida.
-4. Hammasi commit yoki hammasi rollback. Billing UsageEvent agar bu transaction ichida emas bo‘lsa, **outbox consumer orqali idempotent eventual posting** (billing charge yo‘qolmasligi uchun retry/reconciliation bilan). Bu boundary Billing/Finance bilan kelishilmaguncha taklifdir.
+**AR-005 / R2-TXN-01 correction — ownership-aligned transaction boundary (PROPOSED, not business approval):** §6 ning avvalgi “SalesDocument + StockMovement + Finance journal bitta transaction” umumiy talabi §17 bilan zid edi. U **SUPERSEDED AS A RECOMMENDATION (historical PROPOSED alternative only)** deb talqin qilinadi; bu avvalgi APPROVED qarorning statusini o‘zgartirish emas. **Current preferred PROPOSED**: har bir authoritative domain o‘ziga tegishli state/ledger + inbox/dedupe + transactional outbox'ni **bitta lokal ACID transaction** ichida saqlaydi. Sales confirmation Inventory stock yoki Finance GL'ni o‘z tranzaksiyasida bevosita yozmaydi. Inventory dispatch movement+balance+reservation consume+outbox'ni bir lokal transactionda, Finance invoice/journal balanced lines+outbox'ni o‘z lokal transactionida, Billing accepted usage+charge ledger+wallet projection+outbox'ni o‘z lokal transactionida yozadi. Domainlar orasidagi delivery **at least once**, effect esa persistent idempotency/dedupe sababli **effectively once**; global atomic commit yoki instant GL consistency kafolatlanmaydi. Domain triggerlari va shartlari **OPEN**. Batafsil matrix, failure/reconciliation va security testlari §18 hamda [ADR-DB-004](../adr/ADR-DB-004.md)da.
 
 **Inventory invariants:** `available = on_hand - reserved` (dimension darajasida); negative stock taqiqlansa availability check atomic conditional update bo‘lishi shart. Negative stock siyosati hali OPEN QUESTION. Ikki parallel rezervatsiya bir zaxirani ikkalasi ham ololmaydi. StockTransfer ikki tomonlama atomic movement; alohida shards paydo bo‘lsa transfer saga va compensating actions kerak bo‘lishi mumkin.
 
@@ -390,3 +386,71 @@ Expand -> backfill -> verify -> switch reads/writes -> contract. Long-running bl
 **MR-11—tenant isolation acceptance:** tenant-scoped FK `(tenant_id, entity_id)`, app-level authorization, transaction-local RLS context where selected, connection-pool reuse isolation, worker/export/search/object-store isolation and tenant placement routing contract must be tested for cross-tenant leakage. Shared schema + RLS remains PROPOSED, not an approved database deployment mandate.
 
 **Cross-module gate:** coordinate with 05 Sales, 06 Finance, 01 Billing, 02 Multi-Tenant, 10 Security, 11 Infrastructure. AR-003 proposal mismatch now documented coherently; final HA approval OPEN. AR-005 finance posting trigger and chargeable lifecycle still OPEN.
+
+## 18. Round 2 P0 — AR-005 / R2-TXN-01, MR-11 va AR-003 correction (2026-10-12; PROPOSED ONLY)
+
+**Authority/status.** Mavjud user APPROVED biznes invariants o‘zgarishsiz. §6 eski cross-domain ACID tavsiyasi **historical alternative PROPOSED**, hech qanday avvalgi APPROVED ni bekor qilmaydi. §17 source-owner atomic + outbox konsepsiyasi quyidagi shartli **preferred PROPOSED** bilan izohlandi. Sales, Inventory, Finance va Billing biznes triggerlari faqat o‘z domaini/foydalanuvchi tasdig‘i bilan yopiladi; Database ularni tasdiqlamaydi.
+
+### 18.1 Logical transaction/event ownership matrix — candidate facts, not approved business triggers
+
+| Fact/command | Authoritative owner and local ACID write | Event/outbox; downstream consumer | Forbidden assumption / OPEN |
+|---|---|---|---|
+| Commercial CONFIRM | Sales: document state, version, command receipt, outbox | `SalesOrderConfirmed` -> Inventory may request reservation if policy allows | No on-hand decrement; no GL or Billing charge implied |
+| RESERVE / RELEASE / EXPIRE | Inventory: reservation state + available projection + outbox, durable operation dedupe | `InventoryReservationChanged` -> Sales fulfillment projection | TTL, overbooking and negative stock policy OPEN |
+| DISPATCH POST | Sales owns dispatch intent/source identity; Inventory **alone** atomically posts movement leg, balance and reservation consumption + outbox | `StockDispatchPosted` -> Sales visibility; Finance possible valuation/COGS fact | No second inventory effect at invoice; GL timing OPEN |
+| INVOICE ISSUE/POST | Finance (invoice/accounting artifact owner proposed): invoice identity/state; eligible journal header + balanced lines in Finance-local atomic posting; outbox | `FinanceInvoicePosted` -> Sales view, Finance AR/GL | Invoice/AR/tax recognition trigger and legal policy OPEN |
+| GL POST | Finance: journal + all entries, balanced proof, source receipt/idempotency registry, outbox in same transaction | `FinanceJournalPosted` -> reporting/reconciliation | Do not infer GL from order confirmation or dispatch alone |
+| BILLING CHARGE | Billing: approved chargeable occurrence acceptance + rating version + actual ledger debit + wallet balance projection + outbox, all atomic | `BillingUsageCharged` -> platform statement/report | Chargeable doc type/transition/month, payer mapping and reversal policy OPEN (AR-001/009/010); ERP GL separate |
+
+**Per-fact event contract (PROPOSED):** `tenant_id`, `event_id`, `source_fact_id`, `aggregate_id/version`, `operation_id`, `schema_version`, `occurred_at`, `accepted_at`, `causation_id`, `correlation_id`, source and owning domain. Transport delivery at least once; consumer commits its inbox/dedupe record and its domain effect together. Cross-tenant source identifiers or absent tenant context must be rejected. Every event can be delayed or reordered; dependent facts must use explicit prerequisite/state guards.
+
+### 18.2 Atomicity alternatives and guarantees (neither APPROVED)
+
+| Dimension | A: One cross-domain same-database ACID (historical PROPOSED, not selected) | B: Owner-specific local ACID + outbox (preferred PROPOSED) |
+|---|---|---|
+| Commit | Sales+Inventory+Finance same SQL transaction *only while co-located*, regardless of domain authority | Source state+own dedupe+outbox atomic; Inventory, Finance, Billing individually atomic |
+| Partial failure | Before commit rolls all three back; after commit downstream async Billing/integrations can still fail | Each completed local fact durable; consumer may lag/fail; saga/status reconciliation required |
+| Retry | Whole transaction command idempotency; lock/deadlock retries may repeat full workload | Inbox uniqueness+command idempotency; outbox retry at least once until ACK, poison/dead-letter review |
+| Reversal | Same global transaction cannot undo external historical effects; new compensating entries and source links | Owner emits distinct linked compensating fact; each owner processes own reversal once; no rewriting immutable ledgers |
+| Double posting | Unique operation/source constraints in all three domains still necessary | Uniqueness per tenant+source fact+effect kind+policy version; retry must not double stock, journal or charge |
+| Reconciliation | Same-DB cross-table invariants immediate; downstream Billing still reconciled | Outbox pending/inbox processed vs source facts; stock movement vs balance; Finance posted source vs journal; Billing accepted occurrence vs debit/wallet |
+| Cost/limits | Larger locks, coupled deployments, hot-SKU contention, not valid once databases/shards separated | Eventual lag, operational observability and compensations; no global serializable state guarantee |
+
+**Selection rationale:** B preserves authoritative writers from Backend/Sales/Finance and decouples future enterprise isolation, while retaining local ACID invariants. A remains an explicitly labeled **historical PROPOSED alternative** pending multi-domain technical sign-off; no unilateral APPROVED status transition. Outbox publishing failure must not undo committed source fact; re-publish idempotently. Acknowledging an event before consumer commit is forbidden. Reconciliation compares stable source IDs and amounts/quantities, flags orphan/duplicate/missing effects, never posts blind corrective duplicates. Reversal of Finance journals and inventory movements requires new immutable compensating records, and Billing refund semantics remain OPEN.
+
+### 18.3 MR-11 tenant-scoped DB security acceptance specification — tests NOT RUN
+
+| Target | Required negative/positive acceptance test | Expected invariant |
+|---|---|---|
+| Composite FK | Tenant A child refers to tenant B parent with valid UUID; invalid/missing tenant; legitimate same-tenant relation | Cross-tenant insert/update rejected at DB constraint, same-tenant succeeds |
+| RLS + direct access | App role SELECT/UPDATE/DELETE/INSERT with mismatched or absent tenant context; attempt bypass via direct table access | Denied/zero rows/fail closed, no RLS bypass on application roles |
+| Pooled connection | Transaction pool serves A then B; exception/rollback/timeout and context unset; prepared statement re-use | Transaction-local context reset on commit/rollback; no previous tenant data ever visible |
+| Session leakage | Malicious tenant switching within one transaction; session variable retained across reuse; alternate search_path | Explicit context bound/validated to authenticated membership; unsafe session state prohibited |
+| Workers/outbox | Worker replays A event while B context is active; batch containing multiple tenants; retry after worker crash | Explicit per-job authorized tenant scope; no cross-tenant write or delivery; dedupe retained |
+| DB roles / migrations | Runtime role attempts BYPASSRLS, table-owner privileges, DDL, elevated SECURITY DEFINER path; admin jobs | Least-privilege separate runtime/worker/migration/backup/support roles; privileged exceptions audited; no unrestricted app owner |
+| Reports/exports | Cross-tenant join, aggregate, cache, read replica and export object path | Tenant filters enforced in DB and app, exports/caches tenant-scoped, replica routing respects context |
+| Enterprise migration | Move tenant A to isolated placement while B active, replay jobs and pooled connections | Routing fails closed, no cross-placement leak, idempotency keys and FK integrity preserved |
+
+**Exit gate:** automated negative suites across app roles, transaction pool implementations, failed transactions, parallel workers, replica/read routing and privileged escalation; capture reproducible evidence and Security sign-off. No claim these tests have passed. RLS configuration must account for table owner bypass/force policies and SECURITY DEFINER functions. A transaction pool cannot rely on sticky session state.
+
+### 18.4 Inventory hotspots, immutable history, partition and query risks
+
+- **Hot SKU:** unique stock balance row per tenant/warehouse/SKU/dimension; lock or atomic guarded update in deterministic dimension ordering; reserve/dispatch race and two-device duplicate replay test; short transactions, bounded jitter retries and measured contention. No global all-SKU serialization. Negative-stock rule remains OPEN.
+- **Immutable ledgers:** posted StockMovement, FinanceJournalLine and BillingLedgerEntry never update/delete in business operations; correction = linked compensating record with independent operation key and authorization; ledger-to-projection reconciliation plus uniqueness under concurrent retries.
+- **Partition uniqueness:** PostgreSQL partitioned unique/PK constraints must include partition key. A globally stable source/idempotency identity cannot rely on monthly child-local index only: use nonpartitioned dedupe registry or verified alternate uniqueness design; archive/detach cannot erase the dedupe retention required by replay window.
+- **Index/query:** benchmark tenant+warehouse+SKU/dimension exact lookups; tenant+source_fact+effect uniqueness; journal source and billing charge dedupe; outbox state/time ready queue, keyset cursors; index write amplification, tenant skew, bloat, autovacuum lag, long report locks, hot partitions, p95/p99 and query plans. No fixed partition threshold or SLO assumed.
+- **Operational acceptance:** concurrent dispatch + return + reserve, parallel wallet debits/top-ups, crash after source commit but before publish, crash after consumer write but before ACK, late/out-of-order events, replay across partition boundaries; compare immutable ledger vs cached balances and event-to-posting cardinality.
+
+### 18.5 AR-003 Database ↔ Infrastructure HA stages (PROPOSED, not production evidence)
+
+| Stage | Deployment | Meaning / proof |
+|---|---|---|
+| A — initial candidate | Single PostgreSQL primary, encrypted off-site/base backups, continuous archived WAL/PITR, independent isolated restore test with integrity verification and key-restore access | **Recoverability only — NOT HA.** Primary loss causes downtime; restored backup != immediate failover |
+| B — gated candidate | Primary+standby streaming replication, monitored lag, exclusive writer endpoint, fencing / split-brain prevention, documented controlled failover and failback drills | HA *potential* subject to tested behavior; synchronous/asynchronous replication and consistency impact require choice |
+| C — later option | Automated failover/read replicas where justified, capacity/isolation evidence and runbooks | Not automatic commitment or substitute for backups |
+
+**OPEN:** RPO, RTO, availability SLO, backup retention, DR region, spend limits, managed/on-prem provider; user approval required. Stage A vs Stage B production selection is OPEN. Verify PITR to distinct timestamps, lost-WAL alarms, restore under failure, promotions without dual primaries, replica stale-read labeling and read-after-write primary routing. See [Infrastructure](INFRA_ARCHITECTURE.md) and [ADR-DB-007](../adr/ADR-DB-007.md).
+
+### 18.6 Codex/database handoff gate — specification only, NO SQL or implementation
+
+Before coding approval: (1) Sales/Inventory/Finance sign typed event + owner matrix; (2) Billing approves chargeable transitions, attribution period, payer and refunds; (3) review/approve ADR-DB-004 and verify no §6/§17 contradiction remains; (4) confirm tenant RLS/pooling test plan with Security; (5) approve HA/RPO/RTO with Infrastructure; (6) agree immutable posting/reversal keys, partition dedupe retention and physical index benchmarks. These are architecture acceptance gates, not claims of test completion.
