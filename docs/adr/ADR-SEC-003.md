@@ -25,3 +25,6 @@ Security, tegishli modul va Master Architecture muvofiqlashtirilgandan keyingina
 
 ## AR-013/MR-11 isolation alignment — PROPOSED
 Tenant/Company/Branch hierarchy and membership lifecycle candidate source is Multi-Tenant; Security consumes scope references, never creates tenancy graph. All guards derive tenant from verified membership; original session+tenant switch+grant version bound context. Tenant-owned queues, caches, attachments, search, exports, reports and billing events carry scope. Application checks precede DB defense in depth. Shared schema/dedicated/sharding decisions stay OPEN; no redefinition of BillingAccount/Wallet cardinality. Test scenarios are design only, not executed.
+
+## Round 2 cross-module contract (2026-10-12) — PROPOSED / OPEN
+See [Security Architecture §21](../modules/SECURITY_ARCHITECTURE.md#21-round-2-correction--ar-013-p0--mr-11--ar-006-2026-10-12) for the authoritative single-writer matrix, alternative membership ownership A/B, source conflict register, revoke/tenant-switch cache lifecycle, mobile stolen-token/device revoke/impersonation rules, SEC-R2-01…13 negative-test acceptance matrix and required evidence. This ADR remains **PROPOSED**; AR-013 and MR-11 remain **OPEN**; no test or benchmark has been run.
