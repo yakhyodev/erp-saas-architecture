@@ -8,7 +8,7 @@
 - **Status:** PROPOSED.
 - **Muammo:** concurrent sale/stock/finance mutation va async billing double charge.
 - **Variantlar:** distributed transaction; single DB transaction with outbox; fully eventual consistency.
-- **Tanlov:** same-DB operational atomicity + transactional outbox for async billing/integrations.
+- **Tanlov (joriy afzal PROPOSED, Round 2 §18 bilan mos):** har bir authoritative domain o‘z state/ledger + inbox/idempotency + outbox yozuvlarini o‘zining lokal ACID transactionida saqlaydi; domenlararo yetkazish retryable outbox/inbox orqali. Eski yagona Sales+Inventory+Finance same-DB ACID yondashuvi pastda tarixiy PROPOSED alternativa sifatida saqlangan; hech bir biznes trigger tasdiqlanmagan.
 - **Sabab:** correctness without network-held locks or distributed 2PC.
 - **Xavf:** eventual usage lag, outbox retries and reconciliation burden.
 - **Ta’sir:** Sales, Inventory, Finance, Billing, Integrations.
