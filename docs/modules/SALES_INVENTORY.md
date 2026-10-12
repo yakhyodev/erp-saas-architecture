@@ -271,3 +271,35 @@ UX numerical targets remain unmeasured PROPOSED; desktop/mobile errors localized
 
 ### 12.8 Round 2 decision record and central registry proposals
 [ADR-SI-014](../adr/ADR-SI-014.md) and [ADR-SI-015](../adr/ADR-SI-015.md) add Round 2-specific provenance, cross-domain boundaries and acceptance. Existing ADR-SI-011/012/013 remain PROPOSED, not superseded. Central DECISIONS, REQUIREMENTS, MODULE_REGISTRY, OPEN_QUESTIONS and CHANGELOG should link new packets and mark AR-002/005/008/010 as **OPEN pending signatures**; these files were not modified. Codex: **no code until technical/domain/business approvals**.
+
+
+## 13. Round 2 live-main delta: Billing §21 alignment (2026-10-12)
+
+**Status: PROPOSED contract / SELECTED_PENDING_APPROVAL upstream / OPEN business rules.** After reading live Billing §21, Finance Round 2, CRM §12, Backend §19 and Database §18: Sales/Inventory §§11–12 remain valid as proposed design. This addendum does not supersede any APPROVED business rule or claim accepted pricing/accounting policy.
+
+### 13.1 Billing candidate choices are not authorization to charge
+
+Billing §21 records **user-selected candidates for discussion, not APPROVED decisions**. Their impact on source business facts is:
+
+| Upstream selection (not approved) | Sales/Inventory source responsibility | Still OPEN |
+|---|---|---|
+| Company 1:1 BillingAccount 1:1 Wallet (MVP candidate) | Persist actual source_company_id and source_branch_id; never derive billing_account_id, payer_party_id or wallet_id from document's customer/outlet | Company–LegalEntity, account effective assignment and payer/legal liability |
+| Anniversary-based **calendar month** candidate | Supply reliable effective business event time, server acceptance time and immutable occurrence ID, not a calculated negative-wallet expiry | Month clamp/roll-forward, timezone, first negative, refill, expiry |
+| Activated Seat + day proration candidate | No Sales/Inventory seat charge; do not infer seat eligibility from agent assignment or warehouse operator actions | Billing + Multi-Tenant/Security policy |
+| Server-approved business-effective month with linked current-open-period correction | Preserve device_occurred_at (untrusted evidence), server_accepted_at, domain_effective_at, occurrence ID and original/reversal linkage where applicable | Billing effective-month choice and closed-period correction impact |
+| Marginal progressive usage tiers candidate | Emit factual document type, lifecycle occurrence, measurement quantity/unit, company/branch and source version only; never calculate credits/tiers here | Tariff version, thresholds, enterprise override, stacking and rounding |
+
+**Hard constraints (APPROVED):** Seat + Business Usage + Resource Usage and per-document base charge plus volume overage, 1 credit = 10 UZS, actual negative charges for one calendar month without estimated credit ceiling. These do **not** approve any document class/transition, grace-period edge handling, seat timing, or progressive-tier mechanics.
+
+### 13.2 Source-to-Billing contract and tests
+
+Proposed envelope at authoritative domain commit: tenant_id, source_company_id, source_branch_id?, document_type, source_document_id, source_revision, transition_name, transition_id, **business_occurrence_id**, event_id (transport, distinct), source_system, external_document_map_id?, original_business_occurrence_id?, document_line/quantity_metric and unit when relevant, domain_effective_at, server_accepted_at, device_occurred_at? (untrusted), event_schema_version, correlation_id, request_fingerprint. Billing resolves BillingAccount/effective assignment, determines eligible billable transition, volume and tariff, rates actual charge, handles reversals; Sales does not issue a platform charge.
+
+**Document variants all OPEN:** CREATE/SUBMIT/CONFIRM/POST/CLOSE for SalesOrder, Dispatch, PurchaseOrder, GoodsReceipt, FinanceInvoice, Return, Transfer and InventoryCount; partial shipment base fee per order vs per standalone dispatch; cancellation before/after accepted charge, original-source-linked return/refund, amendments/delta, imported historical document exclusion vs validated charge. An external provider ID never becomes canonical business occurrence without explicit mapping and provenance.
+
+**Acceptance proposals:** duplicate envelope IDs or new event envelopes for the same business occurrence result in at most one Billing economic effect *under eventual approved charge policy*; split shipment does not silently multiply SalesOrder base fee; stock reversal does not silently create Billing refund; closed accounting/billing period is not overwritten; server-rejected offline command never becomes accepted billable source fact; a payer remitter, ERP legal debtor, customer and physical outlet remain distinct.
+
+### 13.3 Round 2 scope and status
+No change to typed effects §12: confirm has zero physical movement; Inventory dispatch posts only one leg; Finance invoice cannot debit inventory; Finance GL and SaaS Billing are independent. Database §18 owner-local ACID+outbox remains **PROPOSED** and historically conflicting §6 is a documented non-selected alternative. Catalog global/tenant scope; Party authoritative writer; valuation FIFO vs moving average; negative stock; reservation TTL; count cutoff; partial fulfillment, return accounting and Billing recognition stay **OPEN**.
+
+**Owned ADR link:** [ADR-SI-013](../adr/ADR-SI-013.md) remains PROPOSED; §13 clarifies its dependency on Billing's non-approved selected candidates. General registries and peer-domain Markdown are not edited. Codex: no code.
