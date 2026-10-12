@@ -103,3 +103,105 @@ These are **candidate** effects, not approved accounting policy. Shipment-vs-inv
 | FIN-OPEN-ATOMICITY | Cross-domain posting consistency | Synchronous same-DB orchestration vs durable outbox/inbox eventual posting; Backend/DB review |
 
 **Codex gate:** documentation-only until AR-004/005/008 and fiscal policy decisions are resolved and explicit approval is recorded. No code or guessed defaults.
+
+## Round 2 correction — AR-001/004/005/008; MR-06/07/09 (2026-10-12)
+
+**Status: PROPOSED contracts / OPEN business choices.** Round 2 review and Sales, CRM, Billing, Database, UX were consulted. This section refines earlier proposals without changing their historical statuses.
+
+### 1. Strictly separate financial domains
+
+| Boundary | Tenant ERP Finance | SaaS Platform Billing |
+|---|---|---|
+| Obligation | Customer/supplier legally recognized receivable/payable | Contracted SaaS BillingAccount liability |
+| Source | ERP invoice, approved purchase liability, settlement, valuation | Approved Seat, Business Usage, Resource Usage occurrence, verified wallet top-up |
+| Writer | Finance for GL, AR/AP, cash/bank, allocations | Billing for wallet, credits, usage rating, SaaS charges/invoices |
+| Balance | Functional currency by accounting book/legal entity; tenant-scoped | Credits by BillingAccount/Wallet; tenant/company/branch source attribution |
+| Reconciliation | GL↔AR/AP↔cash/bank↔Inventory valuation | Accepted usage↔charges↔wallet↔provider settlement |
+| Identity | Legal debtor, creditor and payment remitter snapshots | Billing payer mapping; not automatically ERP debtor |
+| Reversal | Finance linked journal/credit note | Billing linked adjustment/refund only under approved SaaS policy |
+
+**Approved SaaS business invariants unchanged:** Hybrid Prepaid; low Seat + Business Usage + Resource Usage; 1 credit=10 UZS; progressive discounts and enterprise contract; actual Seat/Usage negative for one calendar month without estimated credit ceiling. These never imply negative ERP cash, stock or receivable policy. AR-001 BillingAccount/Wallet cardinality and consolidated payer remain OPEN. No Finance journal may mutate Billing wallet and vice versa.
+
+### 2. Authoritative accounting trigger matrix (candidate, not approved)
+
+| Source state/event | Writer / economic fact | Physical stock | AR / AP | GL candidate effect | Status / correction |
+|---|---|---|---|---|---|
+| Sales draft/submit | Sales | None | None | None | PROPOSED; draft not posted |
+| Sales confirm | Sales | None; optional reservation changes available only | None | No default GL | PROPOSED; credit approval policy OPEN |
+| Stock dispatch posted | Inventory | Decrement once per movement leg | No automatic AR | Inventory credit + COGS debit **if recognition policy authorizes** | COGS point, valuation OPEN; linked compensating stock on reversal |
+| Goods receipt posted | Inventory | Increment accepted stock once | No automatic AP | Inventory debit + GRNI/accrual credit **if policy authorizes** | Valuation/GRNI/tax OPEN |
+| Sales invoice issued/posted | Finance | None | Candidate AR open item | AR debit; revenue/tax credits according to jurisdiction | Invoice issue vs final posting recognition OPEN |
+| Purchase invoice approved/posted | Finance | None | Candidate AP open item | Expense/inventory/GRNI clearing debit; AP credit, tax policy OPEN | Match/tolerance/recognition OPEN |
+| Verified payment settlement + allocation | Finance/payment integration | None | Reduce AR/AP allocated open items once | Cash/bank and AR/AP settlement journal; unapplied funds separately | Authorization, third-party payment and settlement timing OPEN |
+| Credit note/debit note posted | Finance | None | Correct original AR/AP open item | Linked correcting journal, tax correction OPEN | Must reference original; no physical return implied |
+| Customer return posted | Inventory | Accepted returned qty once into appropriate bucket | No automatic AR correction | Inventory/COGS reversal only under policy | Credit note separate; returned valuation OPEN |
+| Supplier return dispatched | Inventory | Decrement once | No automatic AP correction | Inventory/GRNI or cost correction under policy | Supplier debit note separate |
+| Reversal after posting | Each original economic-effect owner | Compensating movement only for prior physical movement | Finance compensating open item if original exists | Linked immutable reversal, never delete original | Prevent over-reversal and replay |
+
+**No conflation:** confirm does not physically decrement; dispatch cannot be counted twice; invoice does not create StockMovement; Billing chargeability is an independent AR-010 decision, never inferred from Finance GL.
+
+### 3. Recognition-policy decision packet (OPEN)
+
+| Concern | Alternative A | Alternative B | Recommendation status |
+|---|---|---|---|
+| Revenue | Invoice issuance/posting | Delivery/acceptance/performance obligation satisfaction | OPEN; legal/accounting jurisdiction first |
+| COGS | Dispatch posted valuation | Revenue-matched recognition after delivery/acceptance | OPEN; Inventory costing policy needed |
+| Inventory valuation | FIFO | Moving weighted average / other lawful method | OPEN; cost layers, returns, negative stock coordination |
+| AR | Invoice posting | Contractual performance/milestone receivable | OPEN; tax/legal terms |
+| AP | Supplier invoice posting | Goods receipt accrual then invoice clearing | OPEN; GRNI and matching |
+| Tax | Invoice tax point | Supply/payment-based tax point per law | OPEN; no invented jurisdiction |
+| Period close | Strict close, later adjustments in next open period | Authorized reopen with audit | OPEN; fiscal calendar and tax corrections |
+| FX | Legal-entity functional currency, approved rate at posting | Different lawful rate-date/revaluation basis | OPEN; source/rounding |
+| Atomicity | Cross-domain same-DB ACID | Owner-local ACID + transactional outbox/inbox | **Prefer B PROPOSED**, aligns Database §18; A historical alternative, not approved |
+
+### 4. Party, legal debtor and payer identity contract (AR-008/MR-09)
+
+| Identity | Proposed semantic | Authoritative candidate | Financial rule |
+|---|---|---|---|
+| Party / Counterparty | Tenant-scoped person/legal organization identity | CRM master or shared Party domain — OPEN | Stable ID, merge aliases, legal identity snapshots |
+| Customer | Commercial relationship to Party | CRM | Not automatically the legal debtor |
+| Outlet | Sales/distribution delivery point | CRM | Not automatically debtor or payer |
+| LegalDebtor / ReceivableOwner | Party legally liable for invoice | Finance owns AR obligation; Party identity external | Snapshot debtor party ID, legal name, identifiers and liability terms at posting |
+| Payer / Remitter | Party funding a settlement | Payment evidence + Party mapping, owner OPEN | May differ from debtor; verify authorization and trace both IDs |
+| SaaS payer | Contracted BillingAccount payer | Billing | Not inferred from ERP invoice debtor |
+
+**Third-party payment proposal:** require tenant/legal-entity scope, payer identity, remittance reference, debtor authorization/evidence and explicit allocation to open item. An unmatched remittance is unapplied/suspense, never silently assigned. Party merge does not rewrite historical invoice debtor, payment payer or tax identity; preserve original snapshot, canonical alias mapping, merge approval, actor and effective time. Cross-tenant allocations prohibited; cross-company/intercompany payments OPEN.
+
+### 5. GL posting, reversal and duplicate contract
+
+| Contract field | Requirement (PROPOSED) |
+|---|---|
+| Envelope | schema_version, tenant_id, company_id, legal_entity_id, branch_id?, source_domain, source_document_id, source_revision, source_fact_id, event_id, operation_id, journal_kind, policy_version, amount/currency, effective_at, committed_at, correlation_id, payload_digest |
+| Economic unique key | (tenant_id, legal_entity_id, source_fact_id, journal_kind, policy_version); reversal uses its own fact and original_journal_id |
+| Inbox | Durable received/processed/conflict state; event_id is transport identity, not business occurrence identity |
+| Same-key same-payload | Return original posting result; no new journal |
+| Same-key changed payload | Reject conflict, operator review; never overwrite |
+| Local transaction | Finance journal header+balanced lines+AR/AP open item/allocations+dedup outcome+outbox atomically |
+| Cross-domain delivery | Source owner commits local facts/outbox; Finance consumes at least once, retries; no claim of distributed ACID |
+| Reversal | Explicit authorization, original link, amount/currency/policy lineage, over-reversal prevention; immutable posted records |
+| Recovery | Missing event, poison message, crash after commit-before-ack, out-of-order, period-closed and valuation-not-ready -> exception queue + reconciliation; never blind duplicate post |
+
+**Database §6/§17/§18 alignment:** owner-specific local atomic transaction + outbox is the preferred **PROPOSED** candidate. A single Sales+Inventory+Finance ACID boundary is an alternative, not simultaneously mandatory. Finance records pending accounting status until posting confirmed; Sales must not display GL-posted merely because dispatch succeeded. Billing independently deduplicates canonical billable occurrences.
+
+### 6. Finance UX acceptance contract (UX §16)
+
+| Workflow / persona | Required UX behavior | Forbidden behavior / recovery test |
+|---|---|---|
+| Invoice — accountant | Draft→validate→review debtor/tax/currency/period→authorized post; show server journal ID and AR status | Timeout is UNKNOWN, not posted; retry same operation ID, display prior result, no second invoice/GL |
+| AR payment allocation — accountant (UX-T12) | Show payer vs debtor, open items, remaining amounts, partial/unapplied and verified settlement | No early settlement or over-allocation; stale balances refresh and conflict resolution |
+| AP payment — accountant (UX-T13) | Approval, beneficiary, settlement state, partial allocation and audit | Denied or revoked role cannot post; failed provider settlement cannot mark paid |
+| Bank reconciliation — accountant (UX-T14) | Unmatched items, proposed matches, amount/date/currency differences, source evidence, reviewer decision | Never auto-post balancing entries silently; mismatch stays actionable and reversible |
+| Period close — chief accountant | Preview unresolved postings, unmatched AR/AP/GL/stock, FX/tax checks, approval, close outcome | Concurrent late posting denied/queued by policy; close retry idempotent; reopening requires authorization |
+| Error recovery — accountant | Explicit PENDING/POSTED/FAILED/CONFLICT/UNKNOWN, correlation ID, safe retry, authorized exception escalation | No optimistic final posting, no duplicate credit note, no cross-tenant/branch leak |
+
+Test all with active tenant/company/branch context, permission revocation mid-flow, uz/en/ru, desktop/mobile layouts, keyboard/screen-reader, latency/offline and stale data. UX §16 targets are PROPOSED/unmeasured; no claim of passed usability tests. Finance remains implementation BLOCKED until policy and security gates approved.
+
+### 7. FIN-001 provenance alternatives (AR-004 OPEN)
+
+- **A: Locate evidence:** find dated explicit user approval (conversation, signed decision, issue or commit-linked approval), record immutable link, approver and date in central governance through Master.
+- **B: Explicit re-confirmation:** present exact ledger-boundary text to user; capture fresh approval and date without claiming it retroactively validates original status.
+- **C: Formal review:** if no evidence and user does not reconfirm, Master initiates status/provenance review; only authorized governance changes historical status with audit trail.
+
+**Do not change FIN-001's existing APPROVED label.** Technical ledger topology and all new contracts remain PROPOSED.
+
+**OPEN:** AR-001 payer/cardinality; AR-004 evidence; AR-005 recognition/transaction trigger; AR-008 canonical Party; tax jurisdiction/tax point, functional currency/rate source, FIFO vs average, fiscal calendar/close, legal entity vs branch books, third-party/intercompany settlement and authorized UX role scopes. See [FIN-002](../adr/FIN-002.md), [FIN-003](../adr/FIN-003.md).
