@@ -195,3 +195,71 @@ Cloud vendor/region; data residency; peak concurrency and largest tenant; cost b
 **MR-14/MR-15 OPEN:** acceptable downtime, RPO/RTO, availability SLO, restore frequency, retention, residency, expected peak tenants/transactions and connection budget. No numerical target or provider is approved by this document.
 
 **Impact:** 03 Database, 04 Backend, 02 Multi-Tenant, 10 Security, Billing/Finance/Inventory and 00 Master. The prior AR-003 *textual* disagreement is reconciled at the PROPOSED stage; selection of launch topology remains an explicit user/business decision.
+
+
+## 19. ROUND 2 CORRECTION — AR-003 / MR-14 / MR-15 (2026-10-12; PROPOSED, no tests executed)
+
+**Evidence:** [Round 2 audit](../reviews/ARCHITECTURE_REVIEW_ROUND_2.md) §12 / §20, [Database](DATABASE_ARCHITECTURE.md) §9 / §18.5, [Backend](BACKEND_ARCHITECTURE.md) §7 / §18, [Security](SECURITY_ARCHITECTURE.md) §19, [Billing](BILLING_ARCHITECTURE.md) §20, [Multi-Tenant](MULTI_TENANT_ARCHITECTURE.md) §19. Existing §7 / §18 is preserved; this section specifies operational gates, not a new approval. **No measurements, restore drills or failover exercises have been performed or claimed.**
+
+### 19.1 Canonical availability stages and migration gate
+
+| Stage | Architecture | Guarantee / trade-off | Admission gate — evidence required |
+|---|---|---|---|
+| **A — recovery-first** | Single PostgreSQL primary; encrypted base backup + continuous off-site WAL archive / PITR + verified isolated restore | **NOT HA**; primary host failure causes downtime; cost/operations lower than standby | Business accepts downtime risk; backup encryption, complete WAL chain, isolated PITR, restore verification, alert/runbook/keys and region compliance tested **before production** |
+| **B — controlled HA** | Primary + streaming standby; monitored lag; **single writable endpoint, fencing, promotion and tested failback** | Potential lower downtime but additional compute/storage/network/operator cost; async replication may lose unshipped commits | Explicit availability objectives and budget; Stage A recovery tests remain mandatory; DB/Security verify lockout of old writer, no dual-primary, promotion/rejoin/rollback, application reconnect, stale read policy |
+| **C — measured automation** | Automated failover orchestration, quorum/witness where needed; optional read routing based on measured load | More moving parts, split-brain risk, operational complexity; not an MVP obligation | Repeated successful B drills, incident/volume evidence, approved error budget/cost and automatic fencing & reconciliation test |
+
+**Stage A versus B production launch remains OPEN.** Replication, replica, snapshot and automatic failover never replace independently restorable off-site backup. Stage C is not mandatory. DB §18.5 is the controlling peer proposal, and no contradictory Stage B-at-launch requirement is imposed here.
+
+### 19.2 Explicit OPEN business decision packet (user sign-off required)
+
+| Decision | Alternatives / user input | Evidence and impact | State |
+|---|---|---|---|
+| Launch topology | Stage A recovery-first **or** Stage B primary/standby from day one | Downtime tolerance, recurring infra/ops expense and ability to operate fencing | **OPEN** |
+| RPO | Maximum tolerable **data loss duration**, per recovery scenario; no preset number | WAL archival lag, sync/async replication tradeoffs, restore drill observations | **OPEN** |
+| RTO | Maximum tolerable **service restoration duration**, by failure class | Detection + restore + verification + cutover timings | **OPEN** |
+| Uptime SLO/SLA | Separate internal SLO and contractual SLA, measurement window, exclusions and error budget | Business/service priority, on-call coverage, availability tracking | **OPEN** |
+| Backup retention | Full/WAL/object versions, legal hold, immutable copies and deletion/privacy requirements | Storage cost, compliance, tenant-specific recovery capability | **OPEN** |
+| Region/residency | Primary, backup, standby, DR region and cross-border policy | Regulation, latency, replication cost and cross-region key custody | **OPEN** |
+| Budget & sizing | Monthly baseline/peak cap, cost per workload and availability premium; provider/VM class | Actual load simulation plus vendor quotes, not fabricated tenant count/TPS target | **OPEN** |
+
+**Decision process:** Business/product owner selects objectives and launch Stage A/B; Database + Security + Infra document feasibility, costs and disaster scenarios; approve ADR-DB-007 jointly with ADR-INFRA-002/004; schedule evidenced preproduction drills. If objectives are absent, no numeric commitment and no declaration of production readiness.
+
+### 19.3 Resource budget method — proposed worksheet, values TBD
+
+| Resource | Demand/limit model | Observation and saturation signals | Scale decision |
+|---|---|---|---|
+| App server / LB | Concurrent active requests × measured CPU-time and memory per request; reserve OS/TLS/rollout headroom; account for worker competition | CPU throttling, RSS/GC, p95/p99, request queue, 5xx | Tune requests/DB first, then stateless replicas; zero sticky-session dependency |
+| PostgreSQL connections | `Σ(app_instances × app_pool_max) + Σ(worker_instances × worker_pool_max) + admin/maintenance + replica/HA overhead ≤ measured safe DB capacity` | Active/idle sessions, wait time, lock waits, transaction duration, memory per connection | Bound pools/worker concurrency; admission/backpressure; consider pooler only if tested with transaction-local tenant/RLS context |
+| Queue/outbox | Peak enqueue rate versus durable worker completion rate; estimate backlog ≈ arrival–service rate integrated over burst; storage and retry DLQ allowance | Oldest event age, backlog, failed retries, duplicates, DB contention | Increase worker capacity within DB limits; external broker only after measured need; idempotency mandatory |
+| Cache/Redis | Hot-key count × measured encoded item size × replication/allocator overhead; TTL and invalidation budget | hit/miss, eviction, stale authorization and tenant key leakage | Start without shared cache; tenant-scoped keys, invalidation/version control; never cache authoritative ledger/permission effect |
+| Search | Indexed rows × measured index amplification, ingestion bursts and query concurrency; rebuild space | Query time, indexing lag, disk/IO, hot tenant skew | DB indexes first; separate engine only with workload evidence and tenant-aware search enforcement |
+| Background jobs | Worker slots × CPU/RAM/IO/time/job; concurrent month-end jobs versus pool/DB reserve | Job lag, runaway exports/reports, retries and starvation | Priority/fair scheduling, per-tenant concurrency caps, rate limiting and separate pool when justified |
+| Object storage/CDN | Upload GB + object count + versioning + backup copies + read/egress GB and request fees | Growth, failed uploads, egress, signed URL expiry, orphan objects | Private, tenant-authorized access; lifecycle/retention per approval; CDN only for safely public immutable assets |
+
+**Procedure:** measure workload mix and unit cost in an isolated tenant-aware fixture; model baseline, peak and failure/recovery headroom; cost each candidate Stage A/B/C; document limiting resource and uncertainty; remeasure after every topology change. No arbitrary server size, connection count or threshold is approved. Resource Usage billability is Billing-owned and not inferred from these infrastructure estimates.
+
+### 19.4 MR-15 load and failure test plan (not executed)
+
+| Scenario | Workload / fault injection | Required evidence and invariant |
+|---|---|---|
+| Hot tenant / noisy neighbor | One tenant dominates reads, writes, large uploads, searches while other tenants operate | Per-tenant fairness and isolation, p50/p95/p99 by workload, DB pool wait, throttling and cost; no cross-tenant leakage |
+| Billing month-end | Burst of seat/usage events, backdated/late mobile sync and reconciliation | Outbox/worker age, ledger balance invariant, same occurrence billed once, retry/dedup, no guessed payer/month; unresolved rules remain Billing OPEN |
+| Concurrent stock updates | Many sales/dispatch/reservation attempts against same SKU/location | Lock/deadlock analysis, inventory movement exactly once, no silent lost update; stock policy stays Sales-owned |
+| Offline sync bursts | Large device reconnect wave plus revocations and uploads | Queue saturation, fair retry, authorization at server reconnect, tenant placement epoch safety |
+| Reporting and search | Expensive exports/report reads alongside OLTP sales and finance work | Read routing consistency, lag, production query latency protection, index/IO pressure; authoritative financial reads never silently stale |
+| Soak and spike | Prolonged normal load then peak and app restart/network impairment | Memory/connection leak, backlog drain, resource cost, 5xx, recovery without local session dependence |
+| DB failover / WAL outage | Kill writer under B, stop archiver under A/B, partition old writer | Fail-closed writes, fencing, no split-brain, WAL gap alarm, validated PITR and recovery elapsed/loss observations |
+
+**Test methodology:** record dataset sizes, tenant skew, hardware/provider region, release version, duration, load generator, baseline vs peak, observed concurrency/TPS, p95/p99/error rates, pool waits/locks, queue lag and cost per business transaction. Compare with objectives **only after explicit approval**; no result is labelled achieved or passed before execution. Failure injection only in controlled non-production environments until separately authorized.
+
+### 19.5 Backup, failover and tenant recovery acceptance contract (NOT EXECUTED)
+
+1. **Backup chain:** enumerate encrypted full/base backups and continuous WAL segments, verify checksums/manifest, retention access and complete gap-free replay across target PITR timestamps; simulate a missing WAL segment and require alert/fail-closed recovery.
+2. **Isolated restore:** use separate credentials, network, storage and encryption-key access path; restore DB plus version-consistent object blobs, validate transaction cutoffs, operational metadata, immutable Billing ledger, GL/stock reconciliation and protected tenant boundaries.
+3. **Primary failure, B:** controlled promotion selects one writer; old primary is fenced before client traffic can resume; detect stale DNS/endpoint, retry storm and duplicate event effects; failback requires re-seeding and reconciliation rather than unsafe dual writable.
+4. **Split-brain:** inject partition/quorum loss and stale placement epoch; deny writes where exclusive writer cannot be proven, audit election and operator override; verify no dual primary even under repeated restart.
+5. **Tenant-scoped recovery:** cannot simply PITR whole shared database to rescue one tenant; restore into isolated DB, extract/validate tenant-owned data, map references, avoid cross-tenant collateral writes, coordinate Billing/Finance/attachments/security and single-writer epoch fencing; tenant restore RPO/RTO remains OPEN.
+6. **DR evidence packet:** dated scenario/test artifact, source backup IDs and WAL ranges, integrity results, elapsed recovery time and observed data loss, approvals, unresolved gaps and remediations; repeat after major schema/placement changes.
+
+**Cross-module gate:** Database owns recovery correctness, Backend owns retries/pooling, Security owns key and access controls, Multi-Tenant owns placement/tenant identity, Billing/Finance/Inventory own ledger/stock reconciliation. No global `DECISIONS.md` / `OPEN_QUESTIONS.md` edits here; propose links and OPEN packet synchronisation only. **Codex deployment remains BLOCKED for production until business decisions, test execution and approval; this is architecture-only specification.**
