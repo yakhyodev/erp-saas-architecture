@@ -54,3 +54,9 @@ Event `tenant_id, membership_id, user_id, membership_version, transition_id, eff
 
 ## User-selected Seat candidate and ownership alignment (2026-10-12, PROPOSED)
 Selected for discussion: Seat billable **on activation with day-level prorating**; still **SELECTED_PENDING_APPROVAL**, not APPROVED. Invitations, suspension billing, reactivation, company transfer, company scope, multi-branch license counting, exact day fractions and refunds remain OPEN. Recommended candidate writer contract: global UserCredentials/authentication=Identity; TenantMembership/version and company/branch link=Multi-Tenant; RoleAssignment/PermissionEvaluation=Security; billable seat snapshot/ledger=Billing. Security §17 and MT §19.4 align; MODULE_REGISTRY's old Security-membership responsibility remains a real AR-013 registry mismatch pending cross-module approval. Supersedes the **proposal wording**, not the historical ADR status, of earlier “IAM authoritative membership” sections. Seat interval identity must survive branch/device replay and cross-company transfer without double charges. See [Billing §21](../modules/BILLING_ARCHITECTURE.md).
+
+---
+
+## Cross-reference to ADR-BILL-012 (2026-10-12)
+
+[ADR-BILL-012](ADR-BILL-012.md) expands the existing `PROPOSED` Seat state and proration decision into versioned intervals, local civil-date edge cases, canonical `user_id × company_id` economic dedup and same-key-conflict/reversal rules. **APPROVED_BY_USER via ADR-BILL-011:** per-Company Seat scope (not per Branch/device; separately counted for separate Companies). **Still PROPOSED/OPEN:** activated membership first eligible date, suspension commercial license effect, daily proration, amount, timezone, posting cadence, same-day partial usage, refund, exact tariff and pricing snapshot. Older alternatives are retained for decision provenance; no implicit upgrade to APPROVED.
