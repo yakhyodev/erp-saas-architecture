@@ -197,3 +197,9 @@ AR/MR current owner/status matrix: [OPEN_QUESTIONS v0.3](OPEN_QUESTIONS.md); can
 | BIZ-014 | True measured Tenant-shared Resource Usage charged to one predesignated responsible Company; Company/Branch scoped usage to its own Company | APPROVED_BY_USER |
 
 **Not approved here:** same-person/two-role approval policy, exact metering boundary/timezone, resource units/prices/free tiers, seat activation/proration, chargeable document triggers, late sync/month rules, tax/refunds or technical stack. Recommended two-step responsibility acceptance, future-only assignment and immutable ledger are `PROPOSED`, not proof of implementation.
+
+---
+
+## v0.5 — ADR-BILL-012 Seat lifecycle proposal and existing Seat scope approval (2026-10-12)
+
+New [ADR-BILL-012](docs/adr/ADR-BILL-012.md) appended: **102 ADR files total**; `ADR-BILL-012` overall `PROPOSED`. Existing [ADR-BILL-011](docs/adr/ADR-BILL-011.md) user **APPROVED_BY_USER** Seat *scope* only: canonical user × Company, branch/device no duplicate, different Company additional Seat. ADR-BILL-012 is a detailed **PROPOSED** eligibility/proration/event/charge contract. **Not automatically approved**: ACTIVE activation date, billable INVITED/SUSPENDED/REMOVED status, calendar-day inclusion, any price, rounding, seat charging cycle, pro-rata/refund and transfer economic cutoff. FIN-001 historical APPROVED label still has UNVERIFIED provenance. The old v0.3 per-ADR index is historical; this delta indexes the new ADR without changing existing statuses.

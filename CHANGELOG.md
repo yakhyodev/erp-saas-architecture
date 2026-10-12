@@ -52,3 +52,11 @@ Resolve AR-001..013 with domain owners and explicit user sign-off, then update r
 - User explicitly approved individual Company LegalEntity/BillingAccount/Wallet (1:1:1:1), that LegalEntity as SaaS debtor, third-party authorized funding without liability transfer, Seat once per user per Company (no Branch/device duplication), and one predesignated responsible Company for Tenant-shared measured Resource Usage.
 - Appended scope-limited synchronization notes to Billing, Multi-Tenant, Finance and Master modules, plus DECISIONS, REQUIREMENTS, MODULE_REGISTRY and OPEN_QUESTIONS; previous proposal alternatives remain historical.
 - Two-step shared assignment, prospective change, immutable historical charges, pending attribution and dual-role permission tests are proposed defaults; exact financial cutoffs, price, tax, refund, Seat cycle and technical ADR approval remain OPEN. No code, runtime test, false readiness or old audit rewrite.
+
+---
+
+## 2026-10-12 — v0.5 Seat lifecycle ADR-BILL-012 (design only)
+
+- Added [ADR-BILL-012](docs/adr/ADR-BILL-012.md) (102nd ADR) describing candidate activated Seat lifecycle, calendar-day proration variants, unique economic occurrence per user×Company/day, event-version ordering and linked reversals.
+- Existing ADR-BILL-011 explicit user-approved per-Company Seat scope preserved; activation/suspend/day cutoff/pricing/refund **not automatically approved**.
+- Reconciled Billing, ADR-BILL-010 and Multi-Tenant plus central decision, requirements, registry, open questions and Master architecture documentation. Original audit snapshots retained; no product code/tests/prices invented.

@@ -240,3 +240,9 @@ Status vocabulary follows the Round 2 audit: `SPECIFIED_PROPOSED` = contract dra
 - **Operational PROPOSED:** Tenant admin proposes; recipient Company's authorized finance representative accepts; mapping future effective, immutable historical liability; no automated cross-wallet transfer or arbitrary wallet fallback. Exact approval role delegation, next metering cutoff/timezone, pending attribution, closed-month correction, chargeback remain OPEN.
 
 Earlier AR-001/MR-01 open wording is **historical for the particular now-approved scope**, not wholly deleted. All other AR/MR and FIN-001 provenance are untouched; Round 3 review snapshot still valid historically; tests not run.
+
+---
+
+## v0.5 — MR-03 Seat charging subdecisions and ADR-BILL-012 (2026-10-12)
+
+Existing user-approved **Seat scope**: one user×Company, no branch/device duplication, independently billable across Companies ([ADR-BILL-011](docs/adr/ADR-BILL-011.md)). New [ADR-BILL-012](docs/adr/ADR-BILL-012.md) describes candidate ACTIVE start, invited/pending excluded, local calendar-day prorating, versioned membership events, canonical company-scoped charge dedup and append-only corrections. **No new commercial approval**; technical alternatives stay PROPOSED. **MR-03 = PARTIALLY_RESOLVED**: unresolved (1) activated day counted vs next day vs hourly (2) SUSPENDED reserved-paid vs paused (3) remove/transfer cutoff and same-day multiple company handling (4) local timezone/month window and billing cadence (5) daily fraction and rounding (6) exact Seat amount, enterprise discounts and any refunds (7) out-of-order/backdated correction and MR-02 negative grace interaction (8) final membership writer Security/MT sign-off AR-013. Do not claim Codex ready or executed tests.

@@ -129,3 +129,17 @@ Source: [current-main sync baseline](https://github.com/yakhyodev/erp-saas-archi
 | Metered usage event | Source resource owner; Billing rates and charges | Company/Branch usage to source Company APPROVED_BY_USER; API and metering units PROPOSED |
 
 [ADR-BILL-011](docs/adr/ADR-BILL-011.md) is the canonical scope/provenance. SaaS wallet writer is never ERP Finance, while FIN-003 Party writer choice remains OPEN. Older v0.3 company-cardinality uncertainty is historical for the new MVP scope. No change to identity/membership technical ADR sign-off or Codex readiness.
+
+---
+
+## v0.5 — User×Company Seat economic occurrence ownership (2026-10-12)
+
+| Responsibility | Candidate authoritative writer | Status |
+|---|---|---|
+| Principal/UserCredentials | Identity/Auth | PROPOSED architecture |
+| TenantMembership/version/company+branch scopes | Multi-Tenant | PROPOSED pending AR-013 technical sign-off; never dual writer |
+| Role/grant/revoke evaluation | Security; Backend/domain enforces | PROPOSED; UI hide is not authorization |
+| Seat billable snapshot, membership-state rating, month/day accrual and SaaS Wallet posting | Billing | PROPOSED writer; **APPROVED_BY_USER only Seat user×Company scope**, not economic cutoffs |
+| Company LegalEntity/BillingAccount/Wallet liability | MT legal org reference + Billing contract ledger | User-approved MVP Company 1:1:1:1, detailed technical mapping PROPOSED |
+
+Source [ADR-BILL-012](docs/adr/ADR-BILL-012.md) and [ADR-BILL-011](docs/adr/ADR-BILL-011.md). Economic dedup should key by canonical user×Company, not number of membership/branch/device records. No change to FIN-001 provenance or original permission owner technical approval.

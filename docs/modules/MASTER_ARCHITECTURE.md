@@ -185,3 +185,9 @@ The central registries [REQUIREMENTS.md](../../REQUIREMENTS.md), [DECISIONS.md](
 ## 18. User-approved MVP SaaS Company billing slice — 2026-10-12
 
 [ADR-BILL-011](../adr/ADR-BILL-011.md) stores newly **APPROVED_BY_USER** business scope: Tenant 1:N Company; each Company 1:1 distinct LegalEntity 1:1 BillingAccount 1:1 Wallet, Branch has no wallet; Company's LegalEntity owes its SaaS debt, authorized third-party funder cannot transfer liability; Seat user × Company (not repeated by Branch/device), separately counted across Companies; Tenant-shared real Resource Usage goes to one predesignated responsible Company, ordinary Company/Branch usage to its owning Company. Earlier candidate-only wording is historical for these scoped selections. **PROPOSED:** two-step responsible Company approval, prospective assignment, no retroactive debt/credit transfer. **OPEN:** technical timing/roles, metering, resource prices and unit, Seat activation/proration, legal/tax/refund, month attribution. SaaS wallet != ERP GL. No new stack/technical approval or Codex readiness claim; prior independent Round 3 audit remains historical.
+
+---
+
+## 19. ADR-BILL-012 — Seat lifecycle contract, PROPOSED (2026-10-12)
+
+[ADR-BILL-012](../adr/ADR-BILL-012.md) is the MR-03 lifecycle/charge specification for the **already APPROVED_BY_USER** Seat identity `user × Company` (no Branch/device duplicate, distinct Company independent Seat per ADR-BILL-011). Detailed activation/suspension/removal, calendar-day prorating, same-day cutoffs, exact cycle and price/discount/refund remain PROPOSED/OPEN. Canonical company-scoped economic occurrence, immutable ledger corrections and server-side revocation are preferred technical patterns; Multi-Tenant membership writer vs Security permissions owner remains pending cross-module sign-off. No new platform technology approval or change to the historical Round 3 implementation BLOCKED verdict.
