@@ -25,3 +25,7 @@ Backend, Security, Frontend, Operations.
 
 ## Tasdiqlash sharti
 Cross-module review and explicit user approval; until then not an approved infrastructure decision.
+
+## Round 2 MR-15 scaling and resource budget — 2026-10-12 (PROPOSED)
+
+Budget app compute from measured request CPU/RSS and headroom; bound sum of instance/worker connection pools by actual safe PostgreSQL concurrency; measure outbox enqueue/service/backlog, cache entries/misses, search index/write amplification, background-job CPU/IO and storage/egress/version growth. Compare single host, separate workers/DB, multi-app LB and optional enterprise placement with documented baseline/peak/incident headroom and operating cost. Load tests include hot tenant, billing month-end, concurrent stock writes, mobile reconnection burst, search/report contention and soak/spikes. Instrument p95/p99, failures, wait times, retries, ledger/stock correctness and cost; **no numerical targets or passed measurements claimed**. Kubernetes, Kafka, microservices and sharding not mandatory; migration only via measured saturation/approved need. See [Infra §19](../modules/INFRA_ARCHITECTURE.md).
