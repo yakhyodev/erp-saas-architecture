@@ -165,3 +165,20 @@ Status transitions require user approval, record of evidence, superseding ADR (i
 - **AR-006:** ADR-MOB-004 and ADR-MOB-009 exist (PROPOSED), not missing. Their open policies are not approved.
 - **AR-007:** five central registries exist; remaining synchronization work is not proof of architecture approval.
 - **Tech stack, identity/tenant/data ownership, HA and UX numeric gates remain PROPOSED/OPEN.**
+
+
+## v0.3 — Final cross-module status/provenance delta (2026-10-12)
+
+**Evidence:** [current-main sync baseline](https://github.com/yakhyodev/erp-saas-architecture/commit/f26d4587dcad20f4bf7e8404e27cdcaeace9a355); compared against previous Master commit `6f6c7e9bb04feaf9a586bfcc964110eef6a79084`: 83 commits ahead, 3 added ADR files, multiple peer ADR/module refinements. Round 2 historical audited snapshot still `184b32f7b3dcc9ce8d329ca2dfb7895f06cae905`. The prior 97-row status/provenance index above is retained; these entries **extend it to 100 known ADRs** rather than reprinting older rows. Existing changed ADRs were checked for current status where amended: they remain PROPOSED except FIN-001 retaining its historical APPROVED label. This is a status index, not approval certification.
+
+| New ADR ID | Owner | Current file status | Provenance | Governance action |
+|---|---|---|---|---|
+| [ADR-SI-014](docs/adr/ADR-SI-014.md) | 05 Sales & Inventory | PROPOSED | Current-main ADR, 2026-10-12; AR-002/008 | Resolve Catalog scope and Party writer |
+| [ADR-SI-015](docs/adr/ADR-SI-015.md) | 05 Sales & Inventory | PROPOSED | Current-main ADR, 2026-10-12; AR-005/010 | Sign owner-local transaction, GL recognition and charge lifecycle |
+| [FIN-003](docs/adr/FIN-003.md) | 06 Finance | PROPOSED | Current-main ADR, 2026-10-12; AR-001/008 | Resolve canonical Party, legal debtor, payer remitter |
+
+**Index total (current known inventory): 100 = 99 PROPOSED + FIN-001 APPROVED(label)/UNVERIFIED(provenance).** FIN-001 original status untouched; no evidence of fresh signed explicit approval established. Current modified ADRs retain proposal status even if their parent module records a user-selected candidate for further discussion. **SELECTED_PENDING_APPROVAL is NOT APPROVED.**
+
+**Candidate selections recorded by Billing §21 — all PROPOSED / user selected for review, not approved:** (1) Company 1:1 BillingAccount 1:1 Wallet; (2) anniversary-based **calendar** month (not 30 days); (3) activated Seat + day proration; (4) server-approved business-effective month, closed-period linked current-open adjustment; (5) marginal progressive discount bands. Legal payer, dates, cutoff, charges, stacking, reconciliation and other policy details OPEN. Approved no-estimated-limit/actual-only negative balance invariant unchanged.
+
+AR/MR current owner/status matrix: [OPEN_QUESTIONS v0.3](OPEN_QUESTIONS.md); canonical proposed writer map: [MODULE_REGISTRY v0.3](MODULE_REGISTRY.md). Codex readiness: **NOT REASSESSED**; prior Round 2 BLOCKED is historical audit verdict, not an independent new readiness finding.
