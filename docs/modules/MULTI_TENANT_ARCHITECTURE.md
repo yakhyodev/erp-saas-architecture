@@ -176,3 +176,95 @@ Contract versionlari, exact endpoint nomlari, delivery ordering va security toke
 **BLOCKED until decisions:** AR-001 payer/cardinality/debt owner; AR-013 membership authority; MR-01 legal entity mapping; MR-11 DB isolation/migration/restore; AR-009/010 billing time/charge triggers. Kod generatsiyasi yoki migrationni bu taklif bilan boshlamaslik. Approvaldan keyingi acceptance scenarios: tenant X cannot inspect Y even through ID guessing/cache/search/report/object storage; membership revoke works across active sessions; role revocation forces deny; cross-company scopes enforce resource ownership; billable event unique/deduplicated; unresolved payer never auto-charges guessed wallet; pooled-connection reuse never leaks tenant context; placement switch does not duplicate ledger events; privileged access auditable; recovery does not restore data to wrong tenant.
 
 Cross-module root registry synchronization **faqat taklif**: DECISIONS'da ADR-MT-001/002 PROPOSED; OPEN_QUESTIONS'da AR-001/013 va MR-01/11 unresolved gates; REQUIREMENTS'da isolation/event acceptance proposals; MODULE_REGISTRY'da authority alternatives. **Bu fayllar ushbu commit bilan o‘zgartirilmaydi.**
+
+## 19. ROUND 2 CORRECTION — AR-001 / AR-013 / MR-01 / MR-11 (2026-10-12)
+
+> **Status: PROPOSED contracts, OPEN business/ownership approvals.** Cross-checked on `main`: [Round 2 review](../reviews/ARCHITECTURE_REVIEW_ROUND_2.md), [Billing](BILLING_ARCHITECTURE.md) §3/§19, [Security](SECURITY_ARCHITECTURE.md) §17/§19, [Backend](BACKEND_ARCHITECTURE.md) §17, [Database](DATABASE_ARCHITECTURE.md) §5/§17, [MODULE_REGISTRY](../../MODULE_REGISTRY.md). This section qualifies earlier §3/§15–18, does not overwrite historical proposals. No test run or code.
+
+### 19.1 Entity boundaries and ownership
+
+| Entity | Authoritative candidate / meaning | Relation (OPEN alternatives) | Explicitly NOT |
+|---|---|---|---|
+| Tenant | Multi-Tenant; stable isolation, placement, application organization boundary | 1:1 or 1:N Company | automatically the contracting payer or legal debtor |
+| Company | Multi-Tenant org hierarchy; business operating unit with stable company_id/tenant_id; Finance validates legal/accounting linkage | Tenant → Company 1:1 vs 1:N | necessarily one LegalEntity or one wallet |
+| LegalEntity | Finance candidate for registered legal identity, tax/accounting obligations, effective relationships | Company ↔ LegalEntity 1:1 vs N:1 vs time-bounded relation | synonym of Tenant or automatically SaaS debtor |
+| Branch | Multi-Tenant org hierarchy; tenant_id, company_id, branch_id; resource access boundary | Company → Branch 1:1 vs 1:N (hierarchical branches OPEN) | legal payer by default |
+| BillingAccount | Billing authoritative contract/rating/invoice/liability account and payer assignment | Tenant/Company → BillingAccount N:1, 1:1 or effective-dated N:M | computed from tenant_id/company_id |
+| Wallet | Billing authoritative credit and negative-balance ledger account | BillingAccount → Wallet 1:1 vs 1:N/pooled | ERP GL, company cash account, or Tenant ID |
+| Payer/Debtor | Billing owns SaaS contracted payment obligation and mapped party/account; Finance/CRM Party legal identity mapping subject to AR-008 | may be third party or group payer (OPEN) | necessarily Tenant or branch |
+
+Foreign relation candidate: `Branch(tenant_id, company_id)` must reference a Company of *same tenant*. A legal-entity/payer relationship is distinct from branch scope and must carry version/effective interval when changed. BillingAccount and Wallet are Billing-owned; do not give Tenant a writable balance or authority to select a wallet via untrusted client input. Distinguish source activity, billable subject, legal liability and settlement ownership.
+
+### 19.2 Competing cardinality options (none APPROVED)
+
+| Model | Tenant / Company / Branch | Billing arrangement | Benefit | Risks / approvals |
+|---|---|---|---|---|
+| A: single company | Tenant 1 Company; Company 1 Branch (only) | 1 BillingAccount, 1 Wallet | very small pilot simplicity | cannot support additional branches without later migration; not a universal MVP assumption |
+| B: single legal company, multiple branches | Tenant 1 Company; Company 1:N Branch | one company-level BillingAccount / Wallet | branch operational attribution; simple payer | does not handle multi-company organization |
+| C: multi-company, shared payer | Tenant 1:N Company; Company 1:N Branch | many companies map to one tenant-scoped BillingAccount, candidate 1 Wallet | consolidated cashflow, fewer topups | legal payer consent, expense allocation and debt holder must be explicit |
+| D: company payer (Round 2 preferred candidate) | Tenant 1:N Company; Company 1:N Branch | each billable Company → separate BillingAccount and candidate Wallet 1:1 | traceable liability per company | Seat shared users, resource allocation and cross-company contracts remain OPEN |
+| E: enterprise consolidated | Tenant 1:N Company and LegalEntity relations; branches under companies | contract-defined grouping, effective-dated N:M assignments to BillingAccount; wallet pooling only by explicit approval | flexible enterprise payer consolidation | complex transfers, invoice, tax, historical debt reconciliation, refunds |
+
+Round 2 audit favors **D as a PROPOSED MVP candidate**, C/E as optional alternatives. It does NOT establish that Tenant = legal payer or debtor. Billing §3 says one account/wallet per company; Billing §19.1 clarifies this as **only option B** in Billing's own naming. This document uses A–E solely as local comparison labels; map semantically, not by letter. No cardinality, branch count, payer or wallet count is approved.
+
+### 19.3 Seat / Usage attribution handoff to Billing, not rating
+
+**Source evidence contract (PROPOSED, versioned):** `event_id`, `event_type`, `schema_version`, `tenant_id`, `source_company_id?`, `source_branch_id?`, `principal_user_id?`, `membership_id?`, `source_object_type/id`, `source_version?`, `occurred_at`, `recorded_at`, `producer`, `quantity`, `unit`, `idempotency_key`, `correlation_id`, `causation_id?`, `reverses_event_id?`. Company and branch ownership is resolved server-side at operation time; optional source company/branch are **not** authorization bypass or guessed payer. For a global seat or shared resource without one source company, send a **tenant-level attribution** and explicitly `source_company_id=null`; do not arbitrarily assign to first company. Audit effective membership/scope version.
+
+**Seat:** membership lifecycle facts (e.g. `MembershipActivated.v1`, `MembershipSuspended.v1`, `MembershipRevoked.v1`) include tenant/user/membership/version, effective time and scoped company/branch grants if relevant. These are *inputs* not charge commands; Billing alone defines billable seat uniqueness (user vs membership vs company), snapshots, proration, eligibility and account allocation. A user with multiple branches/companies must not automatically incur repeated seats.
+
+**Business/Resource Usage:** source document/resource fact includes source tenant, company, optional branch, validated authoritative scope, timestamps and stable event ID. Billing separately maps source attribution to effective-dated `billing_account_id` + `assignment_version` + `payer_party_id?` + `legal_entity_id?`; charge ledger preserves both **source attribution** and **liability snapshot**. Unresolved payer ⇒ pending reconciliation, **never guess wallet**. Split/consolidation and shared costs need Billing contract rule approval; source never calculates tariffs, volume tiers, discounts, 10 UZS conversion, wallet balance or negative debt.
+
+**APPROVED invariants untouched:** Hybrid Prepaid; Seat+Business+Resource Usage, document base charge/threshold extras; 1 credit=10 UZS; progressive/enterprise discounts; only actual Seat/Usage debits continue in minus **one calendar month**, no estimated credit limit. Debt holder, expiry interpretation, payer switches, offline month attribution and charge trigger remain OPEN (Billing AR-009/010).
+
+**API candidates:** `Tenant.ResolveOrganizationContext`, `Membership.GetEffectiveState`, `Security.EvaluateScope`, `Billing.ResolveAccountAt(tenant, source_company?, source_branch?, occurred_at)`, `Billing.RecordUsageFact`. Billing returns accepted/pending/duplicate/rejected with event correlation. Event ordering, retry, schema migration and exact endpoint naming to be approved with Backend/Billing.
+
+### 19.4 AR-013 authoritative writer — comparison against live documents
+
+| Bounded record/decision | Writer A (recommended PROPOSED) | Writer B (OPEN alternative) | Current source conflict |
+|---|---|---|---|
+| IdentityCredentials, MFA, sessions, global principal | Identity/Auth (Security identity subdomain) | same | no meaningful conflict |
+| Tenant/Company/Branch graph | Multi-Tenant | same | organization/domain ownership aligned |
+| TenantMembership state/version | **Multi-Tenant single writer** | Security/IAM single writer; Multi-Tenant gets read-only projection | `MODULE_REGISTRY` says Security membership; Security §17, Backend §17 and MT §16 favor Multi-Tenant; Billing §2/ADR-BILL-010 says IAM membership |
+| RoleAssignment, Grant and policy | Security/Permissions single writer | same | Security §17 aligned |
+| PermissionEvaluation | Security/Permissions owns versioned policy/decision, Backend/domain guards enforce with authoritative resource ownership | same | aligned; RLS does not grant company/branch permission |
+| Seat charge eligibility | Billing | same | membership state does not imply paid Seat |
+
+**Recommendation:** choose Writer A after cross-domain approval because organization membership belongs naturally with tenant graph and isolation, while credentials remain global and grants belong to Security. Writer B is viable if IAM owns membership in the final domain map; Multi-Tenant must then never update it. **No dual writable tables or bidirectional status overwrites.** A single membership ID and monotonic state/version for event dedup.
+
+**Lifecycle PROPOSED:** invited (no access), active, suspended (deny), revoked (deny); expiry/declined and reactivation vs new ID OPEN. Invite acceptance verifies identity and tenant. On tenant switch, re-fetch active membership, policy version and scoped grants; server rebinds context and invalidates previous tenant cache/subscription context. On revoke/grant removal, monotonic change version + outbox notification invalidates snapshots, but **notification/cache invalidation alone never authorizes**: all critical operations, delayed job, offline sync and long-running mutation recheck authoritative membership/permission before side effect; unavailable authority ⇒ deny/retry, not allow. Backend guards and domain ownership validation remain mandatory.
+
+### 19.5 MR-11 negative-test acceptance matrix (DESIGN ONLY — NOT EXECUTED)
+
+| ID | Scenario / attack | Required result (PROPOSED acceptance) | Primary joint reviewer |
+|---|---|---|---|
+| MT-NEG-01 | Tenant A token with Tenant B header/resource ID; list, detail, write, count, export | deny/no B metadata; no B mutation | Security/Backend |
+| MT-NEG-02 | Active Tenant A→B switch, stale A token, cached A query or open subscription | B context newly verified; no A privileged action/data in B | Security/UX |
+| MT-NEG-03 | Revoked or suspended membership, cached role and stolen refresh, queued offline action | deny/re-auth; no committed side effect, audit | Identity/Security/Mobile |
+| MT-NEG-04 | RoleAssignment revoked, old policy_version/scope token | current decision deny even if event notification delayed | Security/Backend |
+| MT-NEG-05 | Branch A user accesses Branch B in same company or foreign company, guessed document ID | deny unless explicit authorized grant; tenant-only RLS not enough | Security/ERP domains |
+| MT-NEG-06 | Company A employee attempts writing company B records, mismatched branch.company_id | reject ownership mismatch and no cross-company write | Multi-Tenant/Database |
+| MT-NEG-07 | Background job missing tenant context or reusing stale membership | fail closed; worker cannot touch wrong tenant | Backend/DB |
+| MT-NEG-08 | Cache key/cached search facet, autocomplete, recent, index rebuild or global count lacks tenant/scope | no cross-tenant or unauthorized branch inference | Backend/Security/Search |
+| MT-NEG-09 | Same pooled DB connection used for tenant A then B, rollback/retry/prepared statement/cursor | transaction-local context isolated; missing context returns no rows/errors | Database/Security |
+| MT-NEG-10 | Runtime role superuser/BYPASSRLS/table owner/SECURITY DEFINER/view alternate route | runtime cannot bypass; privileged paths audited separately | Database/Security |
+| MT-NEG-11 | Stale placement_epoch, move pooled→dedicated, simultaneous old writer/queue retry | old writer fenced, no double write/charge, deterministic recovery | Infra/DB/Billing |
+| MT-NEG-12 | Tenant-specific backup/restore or export imported into wrong tenant/shard | restore must preserve identifiers and avoid foreign tenant exposure | Infra/DB |
+| MT-NEG-13 | Client submits foreign billing_account_id/wallet_id or branch reassigned after fact | ignored/rejected; Billing resolves effective payer, historical attribution preserved | Billing/Security |
+| MT-NEG-14 | Company/branch scope removed mid-flight before business commit | recheck or transactional guard deny; no unauthorized side effect | Backend/Security |
+
+Acceptance requires reproducible fixtures for ≥2 tenants, ≥2 companies/branches, overlapping global user memberships, revoked roles, pooled connections, retries and placement epochs. For each case check **read + mutation + side-channel** and audit evidence. These are planned tests only, **NOT TESTED / NOT VERIFIED**; automated gating before production remains PROPOSED. No numerical performance/SLO/restore guarantee invented.
+
+### 19.6 Placement / sharding evolution remains PROPOSED
+
+Stage P (candidate): pooled shared schema + composite tenant FK and defense-in-depth PostgreSQL RLS with non-bypass runtime role and transaction-local verified context, if PostgreSQL selected. Stage E: contract/compliance/performance-gated dedicated DB/instance. TenantRegistry `tenant_id → placement_id + placement_epoch`; move uses single-writer fencing, snapshot/checksum/ledger reconciliation, verified cutover, rollback plan. RLS does not replace Security permission checks; dedicated DB does not replace membership authorization. Per-schema is an alternative with migration overhead. Later pooled tenant-based shard reassignment (not Company/Branch hash sharding). Region/residency, thresholds, RPO/RTO, cutover downtime, CDC and per-tenant restore remain OPEN; DB/Security/Infrastructure sign-off required.
+
+### 19.7 Explicit unresolved approvals / contradictions
+
+- **AR-001/MR-01:** legal debtor and payer Party, company/legal-entity and account/wallet cardinality, cross-company consolidated invoice, third-party topup, split seat/resource allocation and effective-dated account changes — **OPEN: user + Billing + Finance + Master**.
+- **AR-013:** authoritative TenantMembership writer remains **CONFLICTING**: global registry and Billing legacy wording vs Security/Backend/Multi-Tenant candidates. Resolve with explicit one-writer ADR decision, do not silently modify registry.
+- **MR-11:** PostgreSQL/shared-schema RLS final choice, runtime/maintenance roles, privileged break-glass, placement/restore/migration, isolation tests — **PROPOSED / OPEN**.
+- **AR-009/010 dependent:** offline event's billable calendar month and document lifecycle charge trigger are still OPEN; not solved by tenant context or migration.
+- No central registry updates in this Round 2 patch; no old approved business rule is changed.
+
+See [ADR-MT-001](../adr/ADR-MT-001.md) and [ADR-MT-002](../adr/ADR-MT-002.md) for decision alternatives and risks.
