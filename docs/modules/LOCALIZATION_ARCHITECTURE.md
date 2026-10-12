@@ -140,3 +140,64 @@ This section reconciles the failed concurrent `main` update without changing the
 **Responsibilities:** Localization owns locale catalog, script mappings and normalization proposal; UX owns task-first search experience; Security owns permission semantics; Backend/API owns stable contracts; Database/Search owns index consistency and tenant-scoped query execution; Mobile owns offline cache state. Transliteration is never an unreviewed mutation of legal, ledger or stock facts.
 
 **Release gates (OPEN):** platform default locale choice, approved normalization mapping and alias collision thresholds, full Cyrillic Uzbek UI versus search-only support, enterprise language restrictions, search latency/usability numeric targets, and final publication rules for future Uzbek alphabet. All proposed test thresholds and locale identifiers still need corresponding ADR / explicit approval as applicable.
+
+## 15. Round 2 correction — AR-012, MR-17, MR-20 (2026-10-12)
+**Status: PROPOSED contracts; QA NOT EXECUTED.** Round 2 [audit](../reviews/ARCHITECTURE_REVIEW_ROUND_2.md) identifies MR-17 authorization/freshness and MR-20 accessibility/device/locale readiness as OPEN. UX owns workflow completion and UI quality; Security/Backend own authoritative authorization; Localization owns linguistic transformations and catalogs. **APPROVED**: uz/en/ru interface and hidden future Uzbek-alphabet readiness only. No new alphabet public exposure or ADR approval is implied.
+
+### 15.1 Registry, effective preference and catalog protocol (PROPOSED)
+- Public registry entries: `uz-Latn-UZ`, `en`, `ru` (code choices PROPOSED). `uz-Cyrl-UZ` is search-script support, not a newly approved fourth UI. `uz-Latn-UZ-x-new` remains an **internal provisional alias**, excluded from public registry, API language discovery, SEO/links and user-visible preference selectors.
+- Effective language is resolved at a **trusted session/scope**: explicit active-user preference (only if enabled and authorized) → tenant-preferred public locale → deployment/platform default (exact code OPEN). Unsupported, stale or disabled preference resolves to permitted fallback; no feature flag grants data permission. Browser/device preference is initial suggestion only. Tenant/branch switches re-evaluate context; optional branch-specific language override is OPEN, not assumed.
+- Expose a **presentation-only** resolution contract: `requested_locale`, `effective_locale`, `fallback_reason`, `catalog_release` and `scope_revision` (field names PROPOSED); never trust supplied locale or tenant as authentication context. The backend retains tenant-independent stable error/status codes; clients localize labels.
+- Catalog identity: `locale + module + catalog_release + contract_major` (and build integrity digest); translation key identity `module.semantic.action`, with immutable semantic meaning, typed named parameters and tested plural/select branches. A key rename requires an explicit compatibility alias/deprecation window, not silent repurposing. Clients reject incompatible major versions and use a signed/verified last-known-good compatible bundle; missing critical safety/finance text blocks release rather than showing misleading fallback. Keep a deterministic per-key fallback chain: effective locale → compatible approved fallback → non-sensitive safe generic error with diagnostic key; no mixed version of critical workflow messages.
+- All public locale choices receive coverage for loading, empty, error, confirmation, keyboard navigation and screen-reader strings. Preserve a shared glossary between web and mobile. Backend error code + typed params is stable across devices; raw error payload must not expose private records during fallback.
+
+### 15.2 Immutable domain invariants and reversible search (PROPOSED)
+Locale selection, normalization, transliteration and search reindex **MUST NOT mutate** Product ID, SKU, barcode, document number, INN, financial amount/currency/credit, tenant/company/branch ID, actor, domain event ID, business occurrence ID, stable operation ID, audit history or issued document snapshot. Identity matching is exact/canonical per owning domain, **never** based on localized display strings.
+- Store raw originals when evidentiary preservation is needed. Derive separate search-only NFC/casefold/whitespace forms and contextual Uzbek apostrophe aliases; preserve `oʻ/gʻ` distinct from plain `o/g`, and do not apply indiscriminate NFKC or punctuation stripping to IDs.
+- Generate Latin/Cyrillic Uzbek transliteration aliases with explicit `normalizer_version` + `mapping_version` and provenance (`original`, `normalized`, `script_alias`, `reviewed_synonym`). English/Russian use language-aware tokenization and safe Unicode casefold, **not** Uzbek transliteration applied to all languages. Use language detection only as a hint, not destructive transformation.
+- **Collision strategy variants (OPEN user/architecture choice):** (A) conservative no-alias on ambiguous pairs; (B) multiple ranked candidates with explicit original-label and scope; (C) manually curated exception dictionary. Interim PROPOSED fail-safe: never silently merge identifiers/records, rank exact original/exact ID first, surface ambiguities as separate authorized candidates, count false positives and hold highly ambiguous aliases for review. Examples include `ҳ/х`, `қ/к`, `ў/у`, `ғ/г`, `е/ё` and apostrophe collisions.
+- Index/reindex: tenant-scoped immutable source ID references, authorization context, `index_schema_version`, `normalizer_version`, `mapping_version` and source revision. Build a shadow generation, replay changes after snapshot, compare counts/collision/authorization tests, switch pointer atomically per tenant partition, retain previous generation for rollback; never overwrite originals. Freshness and acceptable lag thresholds remain OPEN and require measurement.
+
+### 15.3 Authorized search coverage matrix (MR-17, PROPOSED)
+| Surface | Mandatory trusted scope / enforcement | Cache / migration / negative test |
+|---|---|---|
+| Results and detail links | Backend verifies current tenant, company, branch, membership, resource permission before disclosure | Unauthorized IDs excluded; reauthorize detail open |
+| Total counts and pagination | Count **only authorized** result set under same filter/revision | Forbidden record does not change count |
+| Autocomplete, spelling and suggestions | Authorized projection, no tenant-global raw dictionary exposing sensitive terms | Test tenant A text absent in B suggestions |
+| Facets, aggregations and filters | Authorization before aggregation, no inference through bucket totals | Test zero/hidden bucket leakage |
+| Recent query/history/saved searches | User+tenant+scope ownership, bounded retention and explicit cleanup | Switch/revoke hides history; no cached B data in A |
+| Response cache / CDN / local mobile | Partition by tenant, authorized principal/scope and grant-version; sensitive responses private/no-store where needed | Grant revocation / tenant switch invalidates or fails closed |
+| Search indexes / reindex / background workers | Scoped source readers and fenced generation, read-time server authorization remains authoritative | Stale index and moved/revoked membership fail closed |
+| Locale switch / alias expansion | Locale changes display/aliases only; never broadens scope | Same authorized canonical ID set unless query semantics expressly alter matching |
+
+**No client-side hiding is permission enforcement.** Backend and Security must choose authoritative grant-version/revocation protocol (AR-013 OPEN). If authorization context cannot be refreshed, deny sensitive requests, including offline cached cross-tenant search. Search index placement and engine remain Database/Infrastructure OPEN.
+
+### 15.4 Web, mobile and offline consistency (PROPOSED)
+- Web and mobile consume catalog bundles compiled from the **same semantic key registry and contract major**; release digest, resolved locale and fallback reason are observable without logging private translation arguments.
+- Offline app pins last-known-good verified bundle per user/tenant; app can display locally assigned cached content only within its last valid scope, with offline age and revocation limitations indicated. On reconnect, revalidate membership, branch, device, current grant-version and bundle compatibility before fresh server queries/sync.
+- Locale switch while offline may use installed compatible bundles only; otherwise use safe current-language fallback and communicate that language download is needed. Never silently show a half-loaded mixture of finance/permission critical text. Locale cache purge on sign-out, tenant switch and revoked access follows Mobile/Security policy (remote immediate wipe cannot be guaranteed).
+- Errors remain stable codes/typed non-sensitive arguments independent of device language; unsupported catalog major uses last known compatible bundle and explicit fallback, not guessed translations.
+
+### 15.5 Hidden alphabet rollout and rollback (PROPOSED)
+Default `locale.uz_new.enabled = OFF`. Public registry, preference UI, public API metadata, notification templates, exports and SEO must never expose the option while OFF. Internal preview requires explicit role-authorized tester + separate environment/tenant allowlist, audit event, compatible private catalog and internal-only route; pilot and general release require future explicit approval **not granted here**.
+**Gates:** legal/orthography verified (date OPEN); glossary & typography signed off; translation parity, cross-device/offline QA, security leaks, search collision regression, issued-doc immutability, index rollback and support recovery completed. **Rollback:** disable flag, invalidate bundles and alias generation, revert active search index pointer/catalog release, maintain originals, preserve audit and notify opted-in testers; keep rollback functional before any pilot.
+
+### 15.6 Cross-device and accessibility QA matrix (design only; NOT RUN)
+| Scenario | Uzbek `uz` | English `en` | Russian `ru` | Hidden variant |
+|---|---|---|---|---|
+| Desktop web keyboard/tab/focus/search | REQUIRED | REQUIRED | REQUIRED | Internal QA only |
+| Mobile small/large screen, portrait/landscape, touch targets | REQUIRED | REQUIRED | REQUIRED | Internal QA only |
+| Offline first launch with verified cached bundle / fallback | REQUIRED | REQUIRED | REQUIRED | Internal QA only |
+| Dynamic text scaling, wrapping, long labels, Cyrillic glyph/font | REQUIRED | REQUIRED | REQUIRED | Internal QA only |
+| Screen reader labels, live alerts, errors and dialog focus | REQUIRED | REQUIRED | REQUIRED | Internal QA only |
+| Search Latin/Cyrillic/apostrophe, exact ID and collision ranking | REQUIRED | REQUIRED | REQUIRED | Internal QA only |
+| Tenant/branch switch, revocation, autocomplete/count/facet denial | REQUIRED | REQUIRED | REQUIRED | Internal QA only |
+| Catalog skew, missing key, stale bundle and offline-to-online update | REQUIRED | REQUIRED | REQUIRED | Internal QA only |
+| Document number/money/ID invariance after locale switch | REQUIRED | REQUIRED | REQUIRED | Internal QA only |
+
+Desktop browsers, mobile OS/device list, assistive technology combinations, accessibility conformance version/level, sample datasets, query latency and task completion benchmarks are **OPEN** with UX/Mobile/Security. Do not claim any pass. Use seeded tenant A/B, separate branches, revoked user/device, ambiguous apostrophe pairs, long Russian labels, untranslated key and malformed UTF-8 fixtures; tests must check both outcome and no disclosure.
+
+### 15.7 Release quality gate and ownership (MR-17/MR-20)
+**PROPOSED block release** on critical untranslated/error messages, mismatched typed placeholders, unsupported offline bundle contract, public hidden-alphabet exposure, unauthorized result/count/suggestion/facet/history, index cross-tenant leak, stale-grant bypass or transformed immutable identifier/amount. UX signs off task flows and keyboard/screen reader acceptance, Localization catalog and linguistics, Security/Backend authorization, Mobile offline integrity and Database reindex integrity; none is APPROVED or tested yet.
+
+**OPEN decision packet:** platform fallback/default locale; ambiguous alias collision policy; standalone Uzbek Cyrillic UI need; legal alphabet standard/start date; catalog runtime/ICU version; search freshness target and index owner; tenant enterprise locale override; quantitative UX/a11y/browser/device acceptance baselines. Central registry synchronization is for Master owner, **not applied in this chat**.
