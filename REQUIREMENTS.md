@@ -50,3 +50,12 @@
 - **AR-013:** Identity / membership / permissions ownership — owner: 10 Security & Permissions + 02 Multi-Tenant.
 
 Do not treat any numerical price, volume breakpoint, SLA, RPO/RTO, role definition, document charge trigger or storage partition as approved unless separately evidenced.
+
+
+## Round 2 validation — v0.2 (2026-10-12)
+
+- **APPROVED UX obligation:** Butun ERP platformasida foydalanuvchiga tushunarli va qulay tajriba (BIZ-010) majburiy mahsulot maqsadi. UX-T01…T20 matrix hujjatlashtirilgan, lekin user acceptance, pilot va metrikalar **OPEN** (MR-16/20); sifat o‘lchangani da'vo qilinmaydi.
+- **AR-006:** ADR-MOB-004 va ADR-MOB-009 **EXISTS / FIXED_DOCUMENTATION**; offline TTL, device revocation, local wipe, retention va auth siyosati **PROPOSED/OPEN**, verified security emas.
+- **AR-007:** beshta root registries GitHub main'da **EXISTS / FIXED_DOCUMENTATION**; sinxronizatsiya va provenance work davom etadi.
+- **MR-18:** HR, Manufacturing, Purchasing, Reporting — har birining MVP inclusion/exclusion **OPEN QUESTION**; arxitektura xaritasida modul tilga olinishi MVP ga kiritish qarori emas.
+- **Readiness:** Round 2 auditor verdict **BLOCKED**, 12 BLOCKED / 2 READY_WITH_CONDITIONS / 0 READY; yangi approval va bajarilgan test da'vosi yo'q. [Round 2 audit](docs/reviews/ARCHITECTURE_REVIEW_ROUND_2.md).
