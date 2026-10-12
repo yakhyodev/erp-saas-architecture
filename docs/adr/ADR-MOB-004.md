@@ -37,3 +37,30 @@ Security & Permissions owns identity/revocation policy; Multi-Tenant owns scope;
 Idempotency retention horizon; permission-revocation local data disposal; price/stock conflict UX and operator authority; server conflict payload redaction; business command ordering. All **OPEN**.
 
 [Mobile Architecture](../modules/MOBILE_ARCHITECTURE.md) · [Open Questions](../../OPEN_QUESTIONS.md)
+
+## Round 2 refinement — AR-006 / MR-12 / MR-13 (PROPOSED)
+
+**This ADR already exists.** The review's physical-file gap is resolved; its security and conflict decisions remain unapproved.
+
+### Explicit command and sync contract
+
+Outbox: DRAFT → QUEUED → SENDING → ACCEPTED / REJECTED / CONFLICT / UNKNOWN / RETRYABLE. Timeout/ack loss = UNKNOWN; query status or retry **same** operation_id and unchanged payload hash. Same operation_id + changed payload must be rejected as a conflict, not accepted as another business operation. Retryable temporary failures use backoff/jitter; authorization failure is not a transient retry. A user-resolved changed business intent creates a **new** operation_id linked to the old one. Command ACK != downstream physical stock movement, GL posting or SaaS charge.
+
+Delta cursor: READY → PULLING → APPLYING → READY; invalid cursor or scope revision → RESYNC_REQUIRED → RESYNCING → READY. Preserve pending/unknown commands and commit cursor atomically with data/tombstones. Server deduplication uses tenant-scoped command identity; domain posting uses canonical business_occurrence_id, distinct from delivery event_id. No claim of exactly-once network delivery.
+
+### Server replay and conflict matrix
+
+| Conflict | Server behavior | Client recovery |
+|---|---|---|
+| Version changed | compare expected aggregate revision; no blind overwrite | show differences; CRM/Sales owner resolves |
+| Price/credit/stock changed | Sales/Inventory authoritative validation; no offline stock effect | pending business review |
+| Same key, same payload | return prior accepted/rejected outcome | reconcile UNKNOWN |
+| Same key, different payload | explicit idempotency conflict + audit | create new intent after review |
+| Permission/membership/role revoked | reject and audit at processing time | quarantine, block unauthorized access |
+| Device revoked | reject command/media and token refresh | reauth only through Security-approved recovery |
+| Cross-tenant/branch mismatch | deny; no automatic retarget | explicit scope recovery |
+| Duplicate visit/delivery/payment/charge | stable domain occurrence dedup | show single authoritative result |
+
+On **every** queued attempt verify current identity, tenant/company/branch, membership, role grant, device, assignment and operation/resource scope. Revoke invalidates cached authority. Server accepts only authenticated verified context, not client tenant claims.
+
+**OPEN:** dedup retention, field merge authorization, conflict payload minimization, manual review ownership, domain occurrence uniqueness, dependency ordering and operational backpressure. Billing month policy remains with Billing (AR-009); no business approval is inferred.
