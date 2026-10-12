@@ -84,3 +84,63 @@ PostgreSQL/shared schema/RLS selection remains OPEN with Multi-Tenant, Database 
 
 ## 20. Codex handoff gate — proposed, NOT execution approval
 Contract docs only: identity/membership/grants ownership; per-operation authorization guard; opaque scoped context binding; revoke/version invalidation and fail-closed rules; offline sync rejection taxonomy; negative tenant/RLS/pool test specification. No implementation, migration, test execution or security certification is claimed. Review gate AR-013+AR-006+MR-11 stays BLOCKED pending owning ADR approval and joint sign-off.
+
+## 21. ROUND 2 CORRECTION — AR-013 P0 / MR-11 / AR-006 (2026-10-12)
+**Status: PROPOSED. Membership writer decision OPEN. No production verification, benchmark or security test has been executed.** This section extends §§17–20, not a new APPROVED status.
+
+### 21.1 Authoritative writer vs enforcement matrix (single writer per entity; candidate A)
+| Domain entity | Sole authoritative writer (PROPOSED A) | Readers / enforcement | Mandatory invariant |
+|---|---|---|---|
+| IdentityAuth / UserCredentials | Identity/Auth bounded context (Security identity subdomain candidate) | Backend session guards; Multi-Tenant references user_id | Credentials, MFA factors, credential_version, device/session revocation only writable here |
+| TenantMembership | Multi-Tenant | Identity links user; Security evaluates; Backend guards; Billing consumes changes | (tenant_id, membership_id), user_id, lifecycle state, membership_version; Security is **not** second membership writer |
+| RoleAssignment / scoped grants | Security/Permissions | Multi-Tenant validates org scope; business modules enforce | (tenant_id, membership_id, grant_id), role_id, scope, grant_version, effective/revoked times; no scope escalation |
+| PolicyDefinition | Security/Permissions | Backend/domain guard calls evaluator | policy_id, schema_version, policy_version, action vocabulary, deny precedence; domain owns resource attributes/invariants |
+| PermissionEvaluation | Security/Permissions **policy evaluator** (not source-of-truth writer of decision rows) | Backend/domain/API/job/file/search guard performs enforcement | deterministic allow/deny + reason and evaluated versions; no persistent independent writable authorization truth |
+
+**Alternative B (OPEN):** Security/IAM owns *all membership state* and publishes a read-only projection to Multi-Tenant; identity credentials remain Identity owner, Tenant graph stays Multi-Tenant and grants stay Security. A is preferred for alignment with ADR-MT-002; B avoids separate membership admin API but couples tenant lifecycle to IAM. **Rejected anti-pattern:** both Security and Multi-Tenant modifying membership status or two independently writable role-grant stores. Modular monolith deployment placement does not change domain ownership. Backend provides transport/orchestration and guards, **not** a second credential/membership/grant writer.
+
+### 21.2 Source conflicts and resolution path (not silently resolved)
+- `MODULE_REGISTRY.md` Security row says “Identity, membership, RBAC/ABAC”; later Round 2 candidate table describes Multi-Tenant authoritative membership writer, still OPEN. The generic row is conflicting/ambiguous, **not user approval**.
+- Security §17 proposes Identity→Multi-Tenant membership→Security grants. Aligns with ADR-MT-002 candidate A; remains OPEN.
+- `ADR-MT-002` original text says “Identity/Security membership and scope” but Round 2 addendum compares A Multi-Tenant writer and B Security writer. Treat initial phrase as historical ambiguity, not confirmed ownership.
+- `ADR-BILL-010` original § “IAM authoritative membership transitions” and “Identity/Security owns memberships” conflict with candidate A; its Round 2 correction supersedes that prior **proposal text**, and keeps Billing as Seat qualification, effective-date snapshot, rating and ledger writer. **Membership activation ≠ automatically billable Seat**; day-level proration selected for discussion is pending approval.
+- Global registry and other module files may only be patched by their owners; 00-chat patch is below. No previous APPROVED decision was altered.
+
+### 21.3 Contract: request, tenant switch, revocation and cache
+**Guard input (PROPOSED):** principal_id, session_id, device_id?, credential/session_version, tenant_id, membership_id, membership_version, tenant_state, company_id?, branch_id?, resource_type/id, authoritative resource tenant/company/branch/status, action, grant_version, policy_version, MFA assurance, operation_id?, correlation_id.
+**Server sequence:** validate current authenticated principal/device → resolve current membership **from its authoritative owner** → resolve company/branch ownership in Multi-Tenant → Security Evaluate(policy/grants/resource attributes) → domain-specific guard checks → recheck authorization at critical commit/side-effect boundary → per-tenant DB transaction/outbox. A browser/mobile UI hide/show or route protection is informational only. Apply to reads, writes, streams, websocket subscriptions, batch, worker, export, search metadata/counts/facets/autocomplete, file/signed URLs and background activities. Wrong-scope IDs should not expose existence via errors/timing/content.
+**Switch:** new verified tenant context tied to session/user/device and selected active membership/version; previous tenant context cannot authorize the new tenant; invalidate selected company/branch, cached scopes, cursors and subscriptions. **Revocation:** writer atomically changes state/version and outbox event; Security updates grant/policy versions independently; event subscribers evict affected caches and revoke relevant sessions/subscriptions. Events are *invalidation hints*, not authorization proof. For sensitive mutation, if authoritative current versions are unavailable → fail closed (or retryable unavailable without side effect). Same tenant + stale role/membership version must not remain allowed. Event delivery may be duplicated/out of order; compare monotonic versions. No fixed permission TTL, MFA matrix or revocation latency is approved.
+**Cache key:** principal/session + tenant + membership/version + grant/policy versions + company/branch + resource scope/action + assurance level; deny cache cross-tenant reuse. Authorization freshness gate for read-heavy operations vs strong check for writes is OPEN; never authorize using only long-lived claims.
+
+### 21.4 MR-11 negative-test acceptance matrix — DESIGN ONLY / NOT EXECUTED
+| Test ID | Scenario | Expected |
+|---|---|---|
+| SEC-R2-01 | Tenant A principal guessing B IDs: detail/list/mutate | no B content or mutation, default deny |
+| SEC-R2-02 | Branch A→B, wrong company/branch FK | deny before side effect |
+| SEC-R2-03 | revoked membership/role; stale cache; tenant switch race | no stale permit; session/subscription recalculated |
+| SEC-R2-04 | missing/spoofed transaction tenant context; RLS USING/WITH CHECK | deny SELECT and INSERT/UPDATE/DELETE |
+| SEC-R2-05 | same pooled DB connection A→B, rollback, retry, prepared statements, transaction pooling | B cannot inherit A scope; missing context denied |
+| SEC-R2-06 | runtime role table-owner/BYPASSRLS/superuser attempt, SECURITY DEFINER/view | ordinary role cannot bypass; privileged routes separately audited |
+| SEC-R2-07 | tenant-scoped worker, outbox/inbox, scheduled job, replay | no data/event/charge crossing tenant |
+| SEC-R2-08 | search hit, counts, facets, autocomplete, analytics, cache keys | no cross-tenant result, cardinality or metadata leak |
+| SEC-R2-09 | export, object-store path, presigned URL, CDN and revocation during download | tenant/resource authorization; expiry and refresh protection |
+| SEC-R2-10 | offline queue on device revoked / stolen token / expired refresh | reject with audited permission/device cause, no business commit |
+| SEC-R2-11 | impersonation without consent/expiry/step-up; break-glass | deny or scoped audited exceptional path |
+| SEC-R2-12 | multiple retries/timeouts with stable operation_id | at-most-once business application, unknown ≠ accepted |
+| SEC-R2-13 | tenant placement_epoch stale after move/restore | fail closed, no cross-placement access |
+
+**Evidence required before release:** test dataset tenant A/B and branches, actors/roles and resource ownership map, case IDs, test runner build/commit, environment+DB/runtime role and pool mode, actual SQL policy configuration where applicable, command/response artifacts with PII redacted, observed pass/fail, penetration review and exception remediation links. Target is zero successful forbidden operations, **not a measured result**. PostgreSQL/shared schema/RLS, dedicated placement and tenant migration remain PROPOSED and MR-11 OPEN.
+
+### 21.5 Mobile auth and support (AR-006; PROPOSED)
+- Mobile ADR-MOB-004/009 **exist**; their auth, device revocation and conflict contracts are PROPOSED, not missing. Register device with session family; refresh rotation and server-maintained revoke status. Device clock is not authority. Reauthenticate identity + check device + current membership/grants/scope at every queued command acceptance.
+- Statuses: accepted / rejected_permission / rejected_device / rejected_validation / conflict_version / conflict_business / retryable / unknown. Preserve stable operation_id on timeout, do not double-submit finance/stock/billing effects. Offline drafts may be quarantined pending retention and user recovery policy. **Remote wipe while disconnected is not guaranteed**.
+- Stolen access token: short lifetime proposed, server revocation/session/version checks; protect refresh in OS secure store; theft detection and rotation; unknown risk blocks sensitive operations where assurance insufficient. MFA: step-up for role elevation, impersonation, billing/financial sensitive actions; exact user cohort and factor/recovery UX OPEN.
+- Support impersonation: no default tenant access; tenant approval or documented break-glass, MFA, reason/ticket, least privilege, bounded expiry, dual actor identities in audit; no untracked bypass of RLS, and deny restricted financial/permission actions until separately approved.
+
+### 21.6 00-chat registry patch proposal — NOT APPLIED
+1. `MODULE_REGISTRY.md` row 10 replace generic "Identity, membership, RBAC/ABAC" with "IdentityAuth/Credentials and RoleAssignment/PolicyDefinition/PermissionEvaluation (PROPOSED); TenantMembership authoritative owner: Multi-Tenant candidate A vs Security candidate B OPEN (AR-013); enforcement Backend/domains".
+2. `DECISIONS.md` register candidate A and B as **PROPOSED**, explicitly mark AR-013 OPEN; never mark a new membership owner APPROVED.
+3. `OPEN_QUESTIONS.md` preserve AR-013 OPEN; add PolicyDefinition owner, delegation, reassignment/rejoin, cache/revoke SLA, B alternative, and MR-11 runtime role/pooling/placement evidence questions.
+4. `MASTER_ARCHITECTURE.md` refer to owner matrix + single-writer invariant; no premature hardcoded entity schema.
+5. `REQUIREMENTS.md` security acceptance/test evidence and negative test suite as proposed release gates; `CHANGELOG.md` note Round 2 PROPOSED alignment.
+**Open sign-off:** Security+Multi-Tenant+Backend+Billing+Database+Mobile+00 Master; no code or security tests until decisions are approved.
