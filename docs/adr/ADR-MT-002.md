@@ -64,3 +64,14 @@ All **OPEN**: legal entity master ownership (Finance candidate), payer and debt 
 **Event contract proposal:** membership lifecycle state/version and usage evidence carry immutable tenant_id, company_id?, branch_id?, user_id?, membership_id?, occurred_at, recorded_at, idempotency key and source ID; Billing does effective-dated payer mapping, rating and liability snapshot, unresolved payer→pending. Multi-Tenant never rates Seat/Usage or writes Wallet.
 
 **Approval gate:** user + Billing/Finance decide cardinality/payer/debtor/allocation; Security/Backend/Master decide one membership writer, delegation/invalidation policy; no code until approved. Negative tests [MT §19.5](../modules/MULTI_TENANT_ARCHITECTURE.md) are specifications, not verified tests.
+
+
+## Round 2 current-source delta — Billing §20 / registry v0.2 (2026-10-12)
+
+**Status: PROPOSED, OPEN** — no new ownership approval. The newer Billing §20 explicitly treats company-level wallet as a **preferred MVP option** and distinguishes *paying actor* (`payer_party_id`) from *legal debtor* (`legal_debtor_entity_id`) and payment authorization; neither is inferred from Tenant, Company or Branch IDs. Tenant/Company/LegalEntity/BillingAccount/Wallet cardinalities remain open for user, Billing and Finance. Source-activity attribution may have company/branch but SaaS charge liability is assigned only by effective-dated Billing mapping and immutable mapping version. Global/shared Seat and Resource Usage must not guess a company.
+
+The refreshed `MODULE_REGISTRY.md` Round 2 v0.2 records Multi-Tenant as the **candidate** membership writer while keeping Security-owned alternative OPEN; its earlier high-level Security membership assignment is still a documented conflict, not settled. Latest Backend §18 similarly proposes Identity global credentials → Multi-Tenant Membership → Security RoleAssignment and PermissionEvaluation → Backend/domain enforcement. **No dual writer** for membership or grants. Reader projections and admin UX do not become owners.
+
+Transport `event_id` and canonical `business_occurrence_id` must be distinct where source business occurrence exists; identical occurrence with a new envelope must not duplicate wallet economics. Billing alone rates/post charges; membership transitions are billable-seat inputs, not debit commands. Extra test cases: third-party payer vs legal debtor, company transfer across effective mapping, same occurrence across placement cutover. No test executed.
+
+See [module §20](../modules/MULTI_TENANT_ARCHITECTURE.md). Shared DB/RLS, enterprise dedicated placement and owner selection remain **PROPOSED/OPEN**; no code release approved.
