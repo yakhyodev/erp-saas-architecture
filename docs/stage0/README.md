@@ -18,8 +18,16 @@ To‘rtta development workstream va beshinchi koordinatsiya chati bitta GitHub k
 | [03 — PR va integration gate](03_PR_AND_INTEGRATION_GATES.md) | Yagona branch/PR protokoli, cross-owner review, yetti acceptance gate, PR shabloni |
 | [04 — Stage 0 readiness](04_STAGE0_READINESS.md) | Statuslar, Round 3 delta, real blockerlar, MR-01…20 javobgarligi |
 | [05 — Stage 1 boshlash ketma-ketligi](05_STAGE1_START_SEQUENCE.md) | Faqat alohida code authorizationdan keyin bajariladigan dependency-ordered ishlar |
+| [06 — Review finding registry](06_REVIEW_FINDINGS.md) | 12 original P1→9 canonical issue, comment ID/source/new-line traceability va delta-review disposition |
+| [07 — Delta acceptance fixtures](07_DELTA_ACCEPTANCE_FIXTURES.md) | Har corrected contract uchun named expected fixtures, IC/IG/PG/Stage dependency mapping; NOT_TESTED |
 
-Hozir faqat ushbu Markdown spetsifikatsiyalari yaratilgan. Application repository, mahsulot source, SQL migration, CI konfiguratsiyasi, infratuzilma va deployment yaratilmagan. Paket GitHub’dagi docs-only draft PR review’i uchun tayyorlandi. Chatlar uchun authoritative bo‘lishi tegishli docs PR merge qilinganidan keyin boshlanadi. Hech qanday boshqa chatga xabar yuborilmadi yoki uning sign-off’i taxmin qilinmadi.
+Hozir faqat Markdown spetsifikatsiyalari yaratilgan. Application repository, mahsulot source, SQL migration, CI konfiguratsiyasi, infratuzilma va deployment yaratilmagan. Paket [docs-only draft PR #2](https://github.com/yakhyodev/erp-saas-architecture/pull/2)da review uchun. Chatlar uchun authoritative bo‘lishi docs PR merge qilinganidan keyin; correction/review request boshqa ownerning sign-off’i emas.
+
+## Review correction revision
+
+01 top-level report va 02/03/04 formal COMMENT reviewlar, barcha 10 inline comment o‘qildi: reviewed head `5c9096eeef262ed8e5a5634935435dfc990f7dd4`, 12 P1 (2+3+4+3) → 9 canonical. Yangi correction head GitHub PR metadata va correction summary commentda exact SHA bilan qayd etiladi; registry o‘z commit SHA’sini o‘z ichida taxmin qilib yozmaydi. Barcha original commentlar [06](06_REVIEW_FINDINGS.md)da, fixtures [07](07_DELTA_ACCEPTANCE_FIXTURES.md)da.
+
+05 tavsiyasi `READY_FOR_REVIEW` — corrected docs bo‘yicha **delta review uchun**, merge approval emas. 01–04 yangi head sign-off’lari `OPEN/DELTA_REVIEW_REQUIRED`; original scoped verdictlar tarixiy saqlanadi. Mahsulot tests `NOT_TESTED`, Round 3 `BLOCKED`, code permission NO. `APPROVED_BY_USER` biznes subqarori, delegated selected design, yangi `PROPOSED` correction va unresolved `OPEN` bir-biridan farqlanadi.
 
 ## Statuslarni qo‘llash
 

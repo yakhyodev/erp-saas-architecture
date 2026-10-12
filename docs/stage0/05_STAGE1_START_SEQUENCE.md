@@ -17,17 +17,32 @@ Narx/jurisdiction/provider yetishmasa skeletonda payable amount yoki legal terms
 | Navbat | Lead / kelajak PR | Input / predecessor | Output va exit oracle |
 |---|---|---|---|
 | S1-00 | 05 contract freeze, faqat docs | Stage 0 adoption va application authorization | App SHA+architecture SHA, named scope, IC v1 spec, PG/IG obligations; no guessed approval |
-| S1-01 | 01 repository/runtime/test-harness skeleton | S1-00, real repo owner | Modular monolith boundaries/composition; domain ports; separate runtime/migration identities; DB tx/outbox primitives specga mos; ownership checks |
-| S1-02 | 01 Identity→Tenancy→Permissions vertical skeleton | S1-01, IC-01 technical sign-off | Principal vs Membership vs Grants alohida writer; server scoped read/command; commit-time guard, no economic effect |
-| S1-03 | 01 tenant/pool/local-transaction acceptance | S1-02, real authorized local/test Postgres | A/B and branches negative fixtures; pooled rollback/retry/context test; composite FK/runtime privilege checks; actual PG-SEC/TEN/TXN artifacts |
-| S1-04 | 01 relay + domain-consumer compatibility harness | S1-01/03, IC envelope | Source commit/publish/ACK crash replay; inbox+semantic effect no-op; same-key conflict; new schema envelope no duplicate; service scope authorization |
-| S1-05 | 04 Next.js/Flutter read-only shells + uz/en/ru | S1-02 API/error contract; parallel client sketch docs may start earlier | Scoped login/Company/Branch switch; E/L/X/O/UNKNOWN states; keyboard/a11y; protected context and scoped caches; hidden alphabet OFF |
-| S1-06 | 02/03 consumer boundary acceptance fixtures, no real business posting | S1-03/04; accepted owner ports | Membership Seat-subject projection example; Company/legal refs; source/effect lineage fixtures; actual money/stock/GL paths disabled |
+| S1-01 | 01 foundation: repository/runtime/contract tooling | S1-00, real repo owner | Bootstrap/config, public ports, redacted errors, fail-closed flags; no enabled business store |
+| S1-03 | 01 DB-first synthetic tenant/pool/local-transaction harness | S1-01, real authorized local/test Postgres; **S1-02ga dependency yo‘q** | Composite refs/RLS/non-bypass roles, real pool A→B/rollback; state+receipt+outbox and inbox/effect fault fixtures. Non-public synthetic scope; authdan oldin containment PG-TEN/TXN actual evidence |
+| S1-02A | 01 Identity slice | S1-03 containment, Identity/session/device policy spec | Only Identity writer; current credential/session/device/refresh/revoke fixtures; login tenant permission emas |
+| S1-02B | 01 Tenancy slice | S1-02A + S1-03; IC-01/02/03 producer adoption | Only org/member writer; effective scopes/versions and composite refs; no grants/Wallet writes |
+| S1-02C | 01 Permissions + domain guard slice | S1-02A/B + S1-03; C06/C09/O01 contract freeze | Only grant/policy writer; fresh receipt-result AuthZ, commit/revoke fence interleavings F-O01A, safe scoped switch; enabled auth PG-SEC/TEN evidence |
+| S1-04 | 01 relay + domain-consumer compatibility harness | S1-03 + S1-02C service authority + adopted corrected IC envelope | Namespaced guards F-C03, terminal replay F-C06, resumable pending/ACK F-C07, scoped per-consumer leases F-O01B; crash/upcast fixtures. Real external effect yo‘q |
+| S1-05 | 04 Next.js/Flutter read-only shells + uz/en/ru | Frozen C09/API/error spec; protected enabled shells S1-02C va S1-03 evidence’dan keyin; sketches earlier | Clear/lock-before-new-authorization + generation fencing; F-C09A…D Company/Branch delayed/denied/back/resume/revoke/multi-tab; truthful pending/UNKNOWN; hidden OFF, **local business queue/replay implementation yo‘q** |
+| S1-06 | 02/03 non-economic consumer boundary fixtures | S1-03/04 + S1-02B/C; adopted owner ports and C01/C03/C04/C05/C06/C07 | Raw pending meter, namespaced economic refs, stable external mapping, Seat-subject history, receipt replay and pending liveness fixtures; money/stock/GL/provider disabled |
 | S1-07 | 05 integration evidence review + 01/04 fixes in their own directories | S1-03…06 actual artifacts | Candidate merge/head SHA bo‘yicha PG/IG disposition, remaining OPEN/T evidence; Stage 2 handoff PR with precise disabled paths |
 
 Parallelizm faqat predecessor talab qilmaydigan scoped ishlar uchun: 04 UX spec/read-only mock contract, 02/03 domain contract fixture design. Boshqa chat implementatsiyasini oldindan mavjud deb taxmin qilib patch qilinmaydi. Bu jadval delegated agent ishini ishga tushirish yoki boshqa chatga message yuborish emas.
 
 S1-06 tijoriy Seat hisoblash yoki stock posting emas; accepted kontraktlarni synthetic/non-economic fixture’da tekshirishdir. Haqiqiy Sales/Catalog/Inventory implementation baseline Stage 2/3da, Wallet debits Stage 4da, ERP GL Stage 5da alohida scope bilan keladi.
+
+### 2.1 Domain review backloglari bilan mapping
+
+S1-02 eski logical family nomi; corrected graph `S1-01 → S1-03 → S1-02A → S1-02B → S1-02C → S1-04`, undan S1-06/integrated S1-05→S1-07. Numeric IDsni topological order deb o‘qimang. S1-03 synthetic harness authsiz public authority bypass emas. Pooled/RLS containment tekshiruvi enabled authdan keyinga surilmaydi.
+
+| Owner review’dagi local PR IDs | Global dependency / scope |
+|---|---|
+| 01 PR-001/002/003A/003B/003C/004 | Mos ravishda S1-01/03/02A/02B/02C/04; local IDlar GitHub PR raqami emas |
+| 02 S1-BF-01…06 | Ports/ref freeze S1-00/01; legal/membership fixtures S1-02B/C; namespace/replay/policy-pending S1-03/04/06; status client DTO 04 review. Real Wallet/GL/tariff/provider engine emas |
+| 03 C03-S1-01…05 | Corrected C01/C03/C05/C06/C07 schemas→S1-02B/C current scope→S1-04 pending/replay→S1-06 cross-owner synthetic→S1-07 evidence; no real physical stock/live SalesDoc |
+| 04 04-S1-PR-001…007 | Consumer C09/error/locale freeze→design system→API adapters→S1-02C protected shells→switch generation/cache tests→truthful read-only states→S1-03/04 integration evidence. C08 actual local business queue faqat later-phase policy/implementationda |
+
+09 IC/09 IG/07 PG bilan detailed mapping [03 §4.1](03_PR_AND_INTEGRATION_GATES.md#ic-fixture-stage-matrix), named scenarios [07](07_DELTA_ACCEPTANCE_FIXTURES.md). Owner review backloglari taklif sifatida qayd etilgan; bu mapping user code permission yoki boshqa owner business approval emas.
 
 ## 3. Feature enable matrix
 
@@ -35,7 +50,8 @@ Quyidagi flag nomlari existing handoff’dagilar va qo‘shimcha proposal labels
 
 | Feature / Stage 1 default | Keyin enable qilish uchun exit |
 |---|---|
-| `billing_posting=false` | 02 approved published prices/units/thresholds/timezone/cycle, customer contract, IC-03/05/08/09 adopted, PG-FIN/TXN/TEN evidence |
+| `billing_posting=false` | **C04 / G-MR02 mandatory:** 02 published approved prices/units/thresholds + precise approved anniversary/clamp/timezone/cycle/recovery/rearm/expiry rights/late-correction policy; customer terms, IC-03/05/08/09 adoption va actual PG-FIN/TXN/TEN. MR-02 OPEN bo‘lsa live Seat/usage debit OFF, tariff/reviewning o‘zi yetmaydi |
+| Expiry service enforcement OFF (proposal) | Exact expiry/rearm/customer rights policy approved bo‘lmaguncha restriction yoqilmaydi; no hidden zero-balance hard-stop/no estimated credit cap. F-C04A fixture |
 | `finance_gl_posting=false` | 02 fiscal/accounting profile, debtor evidence, recognition/valuation/period controls; balanced journal/reversal/reconciliation actual tests |
 | `external_writes=false` | Provider LIVE evidence, direction/single-writer, owning domain cutover acceptance, separate outbound authorization |
 | `offline_mutation_sync=false` | 01+04 auth/device/TTL/retention spec, 03 allowed-intent catalog, IC-06 replay/conflict/UNKNOWN tests |
@@ -49,11 +65,11 @@ Config missing yoki flag storage unavailable bo‘lsa financial/outbound/offline
 ## 4. Stage 1 exit
 
 - Latest main/contract dependency yozilgan scoped PRlar merged, writerlar va named scope review dalili bor.
-- Auth/tenant/pool/outbox retry/fingerprint/compatibility uchun real tests executed; observed failures unresolved bo‘lsa Stage 2ga open dependency qaydi.
-- 04 read-only client smoke/task/scoping/a11y/locale tests tested build SHA’da; timeout va revoked state truthful.
+- Auth/tenant/pool/outbox namespace/terminal-replay/pending-liveness/lease/compatibility real fixtures executed; F-C03/C06/C07/O01 candidate SHA’dagi dalili; observed unresolved failures Stage 2ga explicit dependency.
+- 04 read-only client smoke/task/scoping/a11y/locale va F-C09 switch-generation fixtures tested build SHA’da; timeout/revoke/unrated pending truthful. C08 future queue spec/qabuldan oldin atomic-save fixtures majburiy, actual offline delivery Stage 1 OFF.
 - Economic/external/offline mutation flags backend’da disabled bo‘lishi negative test bilan ko‘rsatilgan.
 - Runtime role va test environment dalili captured; DBHub demo natijasi real ERP Postgres/RLS evidence sifatida ishlatilmagan.
-- Stage A real pilot environment provisioning/restore uchun alohida authorized scope va MR-14 inputlari kerak. Stage 1 local CI success Stage A restore yoki production HA isboti emas.
+- Stage A real pilot provisioning/restore alohida scope/MR-14: C02 isolated recovery, current authority+external-effect reconciliation va resume manifest, F-C02A…C actual drill. Stage 1 synthetic replay/local CI pass Stage A restore/PITR yoki HA isboti emas.
 - Stage 2 kickoff issue: canonical Party/Catalog/Pricing, legal mapping va MVP customer scope; Stage 3 physical effects; Stage 4 rates/provider; Stage 5 law/accounting — har biri named gate bilan.
 
 ## 5. Qachon to‘xtatish va kim tuzatishi kerak
