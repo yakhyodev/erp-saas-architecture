@@ -22,3 +22,9 @@ Eventual consistency, duplicate party merges and stale read models.
 Master Architecture, Database, Sales, Finance, Tenant, Billing and Integration.
 
 **Approval pending. No code authorized.**
+
+## Round 2 decision packet — AR-002/AR-008, MR-09 (PROPOSED; 2026-10-12)
+
+**Problem:** CRM-owned Counterparty vs shared logical Party and accidental assumption that Sales is Product/Pricing/Inventory master. **Options:** A shared logical Party context with one writer (**recommended**, initially inside modular monolith); B CRM-owned Party identity writer; C multiple masters with reconciliation (not recommended). **Decision:** none approved; Party writer and legal-identity merge are **OPEN**. CRM remains sole writer of customer relationship and outlet data; Purchasing owns supplier role; Finance owns payer settlement, AR legal debtor snapshots, GL; Sales owns orders; Catalog owns SKU/Product/UoM; Pricing owns price rules; Inventory owns reservations/stock movements. A shared context is a logical boundary, not approved microservice.
+
+**Reason:** a sole canonical ID authority avoids divergent legal identities; independent roles preserve financial obligations. **Risks:** extra boundary, mistaken party merge, cross-company identity leakage. **Required contracts:** tenant-qualified party ID, effective-dated role link, verified scope, versioned PartyCreated/PartyMerged/PartySplit with audit and alias lineage; Finance posted debtor snapshots remain immutable. **Impact:** CRM, Catalog, Pricing, Sales, Inventory, Purchasing, Finance, Tenant/Security, Integration, UX. Approval is pending; no code.
