@@ -22,3 +22,7 @@ Overlapping assignments and more complex temporal queries.
 Database, Identity, Sales, Performance, Analytics.
 
 **Not approved; no code authorized.**
+
+## Round 2 alignment — MR-09/MR-13 (PROPOSED; 2026-10-12)
+
+Agent, supervisor, outlet, company and territory relationship records require effective-from/to, tenant/company authorization and immutable audit. Customer/Outlet/Party role references are distinct; agent assignment never grants global Party access or changes legal debtor. UX-T08/T09 searches and route/visit selections must recheck current scoped grants; stale offline assignment is a conflict requiring reconciliation, not silent overwrite. **OPEN:** overlapping territories, outlet-to-customer cardinality and historical reassignment approver. This is not a new approval.
