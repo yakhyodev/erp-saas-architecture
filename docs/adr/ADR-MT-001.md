@@ -49,3 +49,15 @@ This ADR does **not** approve PostgreSQL, shared-schema/RLS, placement, dedicate
 **Compatibility with AR-001/MR-01:** DB isolation tenant does not imply Tenant = Company = LegalEntity = BillingAccount = Wallet. These relational choices and debt owner stay OPEN; Billing owns wallet ledger/charges, Finance legal entity mapping. Company/branch scope needs additional server authorization beyond RLS.
 
 **Decision gate:** shared-schema/RLS final choice; DB ownership privileges; tenant movement and per-tenant restore proven via threat model/tests and signed off by Database, Security, Infra, Backend, Billing, Master. Until then **PROPOSED; MR-11 OPEN**.
+
+## Round 2 addendum — Isolation, placement and verification (2026-10-12)
+
+**Status stays PROPOSED.** Round 2 review MR-11 calls this specified but untested; Security §19 and Database §17 similarly do not claim RLS/pooling tests executed. Recommend, do not approve: pooled shared schema plus composite tenant FK, transaction-local server-verified tenant context, RLS read/write policies, non-owner/non-BYPASSRLS runtime roles, tenant-aware backend authorization. Alternatives remain per-schema and dedicated DB (enterprise) with independent risk/cost tradeoffs.
+
+**Isolation acceptance matrix:** [Multi-Tenant §19.5](../modules/MULTI_TENANT_ARCHITECTURE.md) MT-NEG-01..14; includes switched tenant, revoked membership, cross-branch reads/writes, background job, cache/search counts, pooled A→B reuse, privileged bypass, stale placement epoch, migration, restore and forged payer reference. All **NOT EXECUTED**.
+
+**Placement/migration:** TenantRegistry stable tenant_id→placement_id/epoch, epoch fencing of old writer, verified single-writer cutover, outbox/Billing dedup, snapshot/checksum/reconciliation and rollback. A dedicated DB improves placement isolation but does not justify cross-company or legal payer assumptions. Tenant-scoped backup restore, RPO/RTO, pooling mode, allowed privileged access, enterprise threshold and downtime remain OPEN.
+
+**Risks and mitigations:** mistaken tenant context → fail-closed + negative tests; privileged owner bypass → strict runtime role separation; cache/worker leakage → auth recheck and namespace discipline; tenant move split-brain → epoch fencing; duplicate billing → source-event dedup and immutable ledger under Billing; restore contamination → tenant-specific validation.
+
+**Decision owners:** Multi-Tenant + Database + Security + Infra, with Backend/Billing integration review. No status elevation or implementation authorization.
