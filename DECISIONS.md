@@ -55,3 +55,113 @@
 - **AR-013** — Identity / membership / permissions ownership; owner: 10 Security & Permissions + 02 Multi-Tenant; see [OPEN_QUESTIONS.md](https://github.com/yakhyodev/erp-saas-architecture/blob/main/OPEN_QUESTIONS.md).
 
 Status transitions require user approval, record of evidence, superseding ADR (if changing an approved contract) and coordinated registry updates.
+
+
+## Round 2 — full ADR status / approval provenance index (v0.2)
+
+**Evidence basis:** [Round 2 audit §4](docs/reviews/ARCHITECTURE_REVIEW_ROUND_2.md), audited source commit `184b32f7b3dcc9ce8d329ca2dfb7895f06cae905` (97 ADR snapshot), not live implementation. This is one-row-per-ADR **status/provenance index**, not duplicate ADR summaries. Exact artifact filenames (including CRM slugged ones) belong to owner module and linked audit inventory; IDs are canonical here. 96 PROPOSED, one FIN-001 tagged APPROVED without independently verified explicit user approval.
+
+| ADR ID | Owner | Document status | Provenance evidence | Next governance action |
+|---|---|---|---|---|
+| ADR-001 | Master | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-002 | Master | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-003 | Master | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-004 | Master | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-005 | Master | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-006 | Master | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-007 | Master | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-008 | Master | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-009 | Master | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-BILL-001 | Billing | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-BILL-002 | Billing | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-BILL-003 | Billing | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-BILL-004 | Billing | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-BILL-005 | Billing | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-BILL-006 | Billing | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-BILL-007 | Billing | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-BILL-008 | Billing | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-BILL-009 | Billing | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-BILL-010 | Billing | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-MT-001 | Multi-Tenant | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-MT-002 | Multi-Tenant | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-DB-001 | Database | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-DB-002 | Database | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-DB-003 | Database | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-DB-004 | Database | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-DB-005 | Database | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-DB-006 | Database | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-DB-007 | Database | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-DB-008 | Database | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-DB-009 | Database | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-BE-001 | Backend | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-BE-002 | Backend | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-BE-003 | Backend | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-BE-004 | Backend | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-BE-005 | Backend | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-BE-006 | Backend | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-BE-007 | Backend | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-BE-008 | Backend | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SI-001 | Sales & Inventory | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SI-002 | Sales & Inventory | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SI-003 | Sales & Inventory | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SI-004 | Sales & Inventory | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SI-005 | Sales & Inventory | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SI-006 | Sales & Inventory | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SI-007 | Sales & Inventory | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SI-008 | Sales & Inventory | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SI-009 | Sales & Inventory | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SI-010 | Sales & Inventory | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SI-011 | Sales & Inventory | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SI-012 | Sales & Inventory | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SI-013 | Sales & Inventory | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| FIN-001 | Finance | APPROVED (label retained; provenance UNVERIFIED) | Round 2 audited snapshot 184b32f7 | Find explicit user approval; do not change original ADR |
+| FIN-002 | Finance | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-CRM-001 | CRM | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-CRM-002 | CRM | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-CRM-003 | CRM | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-CRM-004 | CRM | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-CRM-005 | CRM | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-UX-001 | UX/UI | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-UX-002 | UX/UI | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-UX-003 | UX/UI | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-UX-004 | UX/UI | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-UX-005 | UX/UI | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-UX-006 | UX/UI | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-MOB-001 | Mobile | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-MOB-002 | Mobile | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-MOB-003 | Mobile | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-MOB-004 | Mobile | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-MOB-005 | Mobile | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-MOB-006 | Mobile | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-MOB-007 | Mobile | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-MOB-008 | Mobile | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-MOB-009 | Mobile | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SEC-001 | Security | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SEC-002 | Security | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SEC-003 | Security | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SEC-004 | Security | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SEC-005 | Security | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SEC-006 | Security | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SEC-007 | Security | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SEC-008 | Security | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SEC-009 | Security | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-SEC-010 | Security | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-INFRA-001 | Infrastructure | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-INFRA-002 | Infrastructure | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-INFRA-003 | Infrastructure | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-INFRA-004 | Infrastructure | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-INFRA-005 | Infrastructure | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-INT-001 | Integrations | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-INT-002 | Integrations | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-INT-003 | Integrations | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-INT-004 | Integrations | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-INT-005 | Integrations | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-LOC-001 | Localization | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-LOC-002 | Localization | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-LOC-003 | Localization | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+| ADR-LOC-004 | Localization | PROPOSED | Round 2 audited snapshot 184b32f7 | Check owner ADR and approval before changing status |
+
+- **FIN-001:** original status **APPROVED remains unchanged**; provenance `UNVERIFIED` (AR-004), neither an endorsement nor silent downgrade. Resolve with explicit original user instruction or user reapproval decision.
+- **AR-006:** ADR-MOB-004 and ADR-MOB-009 exist (PROPOSED), not missing. Their open policies are not approved.
+- **AR-007:** five central registries exist; remaining synchronization work is not proof of architecture approval.
+- **Tech stack, identity/tenant/data ownership, HA and UX numeric gates remain PROPOSED/OPEN.**
