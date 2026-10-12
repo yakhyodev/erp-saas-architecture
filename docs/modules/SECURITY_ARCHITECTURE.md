@@ -144,3 +144,9 @@ Contract docs only: identity/membership/grants ownership; per-operation authoriz
 4. `MASTER_ARCHITECTURE.md` refer to owner matrix + single-writer invariant; no premature hardcoded entity schema.
 5. `REQUIREMENTS.md` security acceptance/test evidence and negative test suite as proposed release gates; `CHANGELOG.md` note Round 2 PROPOSED alignment.
 **Open sign-off:** Security+Multi-Tenant+Backend+Billing+Database+Mobile+00 Master; no code or security tests until decisions are approved.
+
+---
+
+## 22. Delegated MVP auth/membership owner candidate and gated launch (2026-10-12)
+
+[ADR-010](../adr/ADR-010-mvp-delegated-baseline.md) locks *design candidate* to one IdentityAuth writer (Security/Auth), TenantMembership status/company scopes writer (Multi-Tenant), RoleAssignment/Policy/Grant writer (Security) and Backend/domain enforcement. This is `DESIGN_SELECTED_UNDER_DELEGATION / PROPOSED`, not completed AR-013 technical sign-off. Revocation/tenant switch authorization must recheck current membership/grant and resource scope before every mutation and offline replay, with fail-closed if unknown; UI hide/show not authority. Conditional FORCE RLS, pool A→B, cache/search/count/facet, export, object storage and workers cross-tenant negative tests required, NOT RUN. Shared Tenant Resource Assignment candidate two-person flow: Tenant admin proposes, receiving Company's authorized finance representative accepts, all identities verified per ADR-BILL-011; exact financial delegation and fraud/wrong-wallet/third-party payer proof are OPEN legal/business gates. No SSO/token/session timeout values invented. [Codex safety](../handoff/CODEX_START_HERE.md).

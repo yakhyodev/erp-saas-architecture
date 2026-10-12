@@ -454,3 +454,9 @@ Expand -> backfill -> verify -> switch reads/writes -> contract. Long-running bl
 ### 18.6 Codex/database handoff gate — specification only, NO SQL or implementation
 
 Before coding approval: (1) Sales/Inventory/Finance sign typed event + owner matrix; (2) Billing approves chargeable transitions, attribution period, payer and refunds; (3) review/approve ADR-DB-004 and verify no §6/§17 contradiction remains; (4) confirm tenant RLS/pooling test plan with Security; (5) approve HA/RPO/RTO with Infrastructure; (6) agree immutable posting/reversal keys, partition dedupe retention and physical index benchmarks. These are architecture acceptance gates, not claims of test completion.
+
+---
+
+## 19. Delegated MVP database transaction and isolation candidate (2026-10-12)
+
+[ADR-010](../adr/ADR-010-mvp-delegated-baseline.md) confirms for **design handoff** owner-local ACID state+outbox then domain inbox idempotent effect, chosen as PROPOSED architecture; §6 old Sales+Inventory+Finance one-cross-domain transaction remains a clearly historical rejected-as-default alternative, not simultaneously normative. PostgreSQL tenant_id composite FKs, guarded server scope + conditional FORCE RLS and transaction-local pool tenant context `PROPOSED`, with same connection reuse A→B negative tests REQUIRED (not run). No inter-tenant client-selected Wallet or financial posting, and no tenant restore without isolated evidence. Stage A single-primary WAL/PITR for internal pilot (NOT HA), B standby/fencing before contractual uptime, and C measured automatic failover. RPO/RTO/region/retention/load targets and evidence `EXTERNAL_INPUT_REQUIRED`. [Handoff gate](../handoff/REMAINING_GATES.md).
