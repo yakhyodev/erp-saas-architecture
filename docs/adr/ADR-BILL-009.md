@@ -47,3 +47,6 @@ Misconfigured types, duplicated imports, partial fulfillments, refunds after fin
 
 ## Approval gate
 AR-010 and MR-04 remain OPEN pending business+Sales+Billing joint decision, including per-type eligibility, volume metric, cancellation/refund and integration behavior. No implementation authorization.
+
+## Round 2 clarification — AR-010 / MR-04 (2026-10-12, PROPOSED)
+Extended [type × transition × base/overage × cancellation/import matrix](../modules/BILLING_ARCHITECTURE.md#204-ar-010--mr-04--document-charging-and-volume-matrix). Sales Order confirm/finalize; Sales Invoice issue/post; Purchase Order approve; Goods Receipt post; Stock Transfer dispatch/complete; Return/Credit Note post; Inventory Adjustment post; imported external document accepted/finalized are **alternative OPEN charge triggers, not APPROVED**. For each separately decide base fee once per logical billable occurrence, source-authored volume/unit/threshold, correction delta vs reversal, partial fulfillment, cancellation policy and external legacy recognition. Semantic source_system+document+revision+transition identity distinct from transport event ID; recurring import must not double-charge. Sales/Finance stock/GL effects are separate.
