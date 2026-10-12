@@ -28,3 +28,6 @@ Foydalanuvchi alohida tasdiqlamaguncha PROPOSED. O'zgartirilsa eski ADR SUPERSED
 
 ## MR-04 / MR-05 and late event clarification (PROPOSED)
 See [Billing §19.5–19.6](../modules/BILLING_ARCHITECTURE.md#196-mr-04--mr-05--volume-resource-discount-and-pricing-conflict-gates). Pricing snapshot includes eligibility policy, effective-dated contract, base/over-threshold volume rule, resource unit, discount window/tier algorithm, rounding, and original/posted period links. **OPEN** whether late offline event uses server-effective, received, validated device occurrence, or controlled adjustment period; choosing price version cannot precede this policy. Enterprise precedence and stackability are OPEN; no invented numerical tiers or discount.
+
+## User-selected effective-period clarification (2026-10-12, PROPOSED)
+For discussion user selects server-approved business-effective month with immutable current-period adjustment after close. Date used to select historical price version and enterprise contract is still OPEN. A late event must record original usage period, current posting period and explicit correction reason; no silent re-rating. See [Billing §21](../modules/BILLING_ARCHITECTURE.md).
