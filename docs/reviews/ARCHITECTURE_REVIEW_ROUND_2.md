@@ -2,44 +2,66 @@
 
 > **Holat:** REVIEWED — CORRECTIONS REQUIRED  
 > **Loyiha / auditor:** Sales doc copy · 14 — Architecture Review  
-> **Audit qilingan branch:** mavjud \`main\`  
+> **Audit qilingan branch:** mavjud `main`  
 > **CURRENT AUDITED HEAD (frozen evidence snapshot):** [184b32f7b3dcc9ce8d329ca2dfb7895f06cae905](https://github.com/yakhyodev/erp-saas-architecture/tree/184b32f7b3dcc9ce8d329ca2dfb7895f06cae905)  
 > **Historical baseline:** [016573c8426ed3ea3b1eacbd0dc81adb67861220](https://github.com/yakhyodev/erp-saas-architecture/tree/016573c8426ed3ea3b1eacbd0dc81adb67861220)  
 > **Historical first audit:** [ARCHITECTURE_REVIEW.md](ARCHITECTURE_REVIEW.md)  
 > **Review date:** 2026-10-12  
 > **Implementation verdict:** **BLOCKED**. This review does not approve technical designs or authorize product code.  
-> **Snapshot caveat:** the commit creating this review will advance the live main HEAD; the audited source HEAD remains the immutable SHA above. No source ADR/module/registry was modified as part of this review.
+> **Snapshot caveat:** audited source HEAD remains `184b32f7b3dcc9ce8d329ca2dfb7895f06cae905`; this editorial update advances main but does not retroactively change audit evidence.
+> **Publication baseline main HEAD:** [776d5190b696c776ebaa2d0a0549daac9b32873b](https://github.com/yakhyodev/erp-saas-architecture/commit/776d5190b696c776ebaa2d0a0549daac9b32873b) (re-checked before editing; previous Round 2 publication).
 
-## 1. Executive summary
+## 1. Executive Summary
 
 GitHub connector orqali **main HEAD qaytadan tekshirildi**, uning recursive tree’i hamda **barcha 17 modul Markdowni, 97 individual ADR, beshta markaziy registry, README va avvalgi 600 qatorli audit** mazmuni tekshirildi. **121 Markdown = 97 ADR + 17 module docs + 5 root registries + README + first review**; 14 arxitektura yo‘nalishi saqlangan. Tarixiy baseline 108 Markdown/90 ADR/17 module docs edi. Current main baseline’dan **59 commit oldinda**, 59 ta fayl qo‘shilgan yoki o‘zgargan.
 
 **Haqiqiy taraqqiyot:** ilgari yo‘q bo‘lgan ikki Mobile ADR va beshta registry paydo bo‘lgan (2 eski missing-file/document-existence muammosi tuzatilgan); Catalog/Party/tenant va Security ownership takliflari oydinlashgan; Database/Infrastructure bir xil staged HA taklifga kelgan; Sales–Inventory–Finance typed lifecycle matrix yaratilgan; Billing uchun negative-month, seat, rating, document lifecycle variantlari tafsilotli; UX persona × **20 workflow** sinov matritsasi bor; SalesDoc **DOCUMENTED** vs **LIVE_VERIFIED** taxonomy yaratilgan.
 
-**Haqiqiy qolgan muammolar:** hech bir yangi texnik model user-approved emas; BillingAccount/Wallet/legal payer cardinality, finance tax/GL recognition, document charge trigger, late offline month, permission owner, Catalog/Party scope, SLA/RPO/RTO va UX acceptance approval ochiq. Database §6 dagi “SalesDocument + stock + finance journal bitta transaction” ifodasi §17 dagi distinct-domain outbox yondashuvi bilan **bir faylda hozir ham semantik jihatdan muvofiqlashtirilishi zarur**. \`MODULE_REGISTRY.md\` Securityga membership responsibilityni beradi, Security/Multi-Tenant appendixlari esa TenantMembership writer uchun Multi-Tenantni nomzod qiladi. \`OPEN_QUESTIONS.md\` AR-006/007ni hamon “missing” deydi — bu **stale tracking**, foydalanuvchining yangi arxitektura tasdig‘i emas.
+**Haqiqiy qolgan muammolar:** hech bir yangi texnik model user-approved emas; BillingAccount/Wallet/legal payer cardinality, finance tax/GL recognition, document charge trigger, late offline month, permission owner, Catalog/Party scope, SLA/RPO/RTO va UX acceptance approval ochiq. Database §6 dagi “SalesDocument + stock + finance journal bitta transaction” ifodasi §17 dagi distinct-domain outbox yondashuvi bilan **bir faylda hozir ham semantik jihatdan muvofiqlashtirilishi zarur**. `MODULE_REGISTRY.md` Securityga membership responsibilityni beradi, Security/Multi-Tenant appendixlari esa TenantMembership writer uchun Multi-Tenantni nomzod qiladi. `OPEN_QUESTIONS.md` AR-006/007ni hamon “missing” deydi — bu **stale tracking**, foydalanuvchining yangi arxitektura tasdig‘i emas.
 
 **Round 2 oldingi 13 ta topilma statuslari:** quyida har biri dalilli va bir necha statusli ifodalangan. **FIXED_DOCUMENTATION (physical gap solved): 2/13 — AR-006 va AR-007**, lekin root registriesdagi tracking hali yangilanishi kerak. **Qolgan 11/13** bo‘yicha kamida user/domain approval, live evidence yoki final contract sign-off talab qilinadi; bu 11ning hammasi “user approval”ga bir xil darajada muhtoj degani emas. **APPROVED-vs-APPROVED ziddiyat:** aniqlanmadi. **Codex:** 12 BLOCKED, 2 READY_WITH_CONDITIONS, 0 READY; umumiy **BLOCKED**.
 
-**Terminlar:** \`FIXED_DOCUMENTATION\` — eski hujjat/fayl kamchiligi hozir bartaraf etilgan; \`HARMONIZED_PROPOSED\` — mos va batafsil taklif yozilgan, lekin qaror tasdiqlanmagan; \`STILL_CONFLICTING\` — joriy matnlar orasida hali o‘zaro farqli authority/transaction ifodasi bor; \`MISSING_APPROVAL\` — user/domain formal sign-off yoki original provenance yo‘q. Bu belgilar bir topilmada birga kelishi mumkin. **PROPOSED mismatch ≠ APPROVED business conflict**.
+**Terminlar:** `FIXED_DOCUMENTATION` — eski hujjat/fayl kamchiligi hozir bartaraf etilgan; `HARMONIZED_PROPOSED` — mos va batafsil taklif yozilgan, lekin qaror tasdiqlanmagan; `STILL_CONFLICTING` — joriy matnlar orasida hali o‘zaro farqli authority/transaction ifodasi bor; `MISSING_APPROVAL` — user/domain formal sign-off yoki original provenance yo‘q. Bu belgilar bir topilmada birga kelishi mumkin. **PROPOSED mismatch ≠ APPROVED business conflict**.
+
+---
+
+## 2. Audit Scope & Methodology
 
 ### Audit doirasi
 
 - GitHubdagi Markdown manbalar va individual ADRlar audit qilindi; ayrim module hujjatlari tarixiy qismlar va keyingi clarification appendixlaridan iborat.
 - No executable application, SQL migration, authenticated SalesDoc production API, RLS/connection-pool test, measured UX/usability/performance, backup restore, failover drill yoki security audit ishga tushirilmadi.
 - Historical review faktlari yangisi sifatida ko‘chirilmaydi; Round 2 topilmalari current HEADdagi tegishli bo‘limlar va ADRlarga tayangan.
-- Manba nisbiy linklari ushbu \`docs/reviews\` faylidan ishlaydi; ularning content snapshoti yuqoridagi audited commit SHAga tegishli.
+- Manba nisbiy linklari ushbu `docs/reviews` faylidan ishlaydi; ularning content snapshoti yuqoridagi audited commit SHAga tegishli.
 - Severity riskning potensial ta’sirini bildiradi, ishlayotgan tizimdagi tasdiqlangan defekt degani emas.
 
 ---
 
-## 2. Documentation inventory va ADR governance
+**Publication check:** joriy `main` shu qayta rasmiylashtirishdan avval [776d5190b696c776ebaa2d0a0549daac9b32873b](https://github.com/yakhyodev/erp-saas-architecture/commit/776d5190b696c776ebaa2d0a0549daac9b32873b) edi. Mavjud Round 2 audit ma’lumotlari o‘zgarmagan; yangi vazifa — ayni hisobotni qayta strukturalash. 97 ta ADR / 17 modul bo‘yicha yangi runtime verification o‘tkazilgani da’vo qilinmaydi. Auditni o‘tkazishda GitHub connector orqali joriy manba kontentlari ko‘rilgan, production tizim tekshirilmagan.
+
+---
+
+## 3. Repository Baseline va commit SHA
+
+| Revision | Commit SHA | Ma’nosi |
+|---|---|---|
+| Historical baseline | [`016573c8426ed3ea3b1eacbd0dc81adb67861220`](https://github.com/yakhyodev/erp-saas-architecture/commit/016573c8426ed3ea3b1eacbd0dc81adb67861220) | Birinchi auditdan oldingi tarixiy arxitektura snapshoti: 108 Markdown / 90 ADR. |
+| **Round 2 audited source HEAD** | [`184b32f7b3dcc9ce8d329ca2dfb7895f06cae905`](https://github.com/yakhyodev/erp-saas-architecture/commit/184b32f7b3dcc9ce8d329ca2dfb7895f06cae905) | 00–13 reconciliation hujjatlari bo‘yicha **asosiy dalil snapshoti**: 121 Markdown / 97 ADR / 17 modul. |
+| Previous Round 2 report commit | [`776d5190b696c776ebaa2d0a0549daac9b32873b`](https://github.com/yakhyodev/erp-saas-architecture/commit/776d5190b696c776ebaa2d0a0549daac9b32873b) | Mazkur review’ning avvalgi 12-bo‘limli to‘liq versiyasi, review faylining tarixida qoladi. |
+| Main HEAD before this editorial update | `776d5190b696c776ebaa2d0a0549daac9b32873b` | 23-bo‘limga qayta tartiblashdan avval GitHub’dan tasdiqlandi; publication commit GitHub commit history va yakuniy javobda beriladi. |
+
+**Hisoblash farqi:** Round 2 review ilk bor qo‘shilgach joriy repositorydagi Markdown soni 122 bo‘lgan; auditning o‘zi **121** hujjatli oldingi HEADga asoslangan. Shu ikki inventarni aralashtirmang. [Historical review](ARCHITECTURE_REVIEW.md) o‘zgartirilmaydi.
+
+---
+
+## 4. Markdown Documents & ADR Inventory
 
 | Kategoriya | Baseline | Current HEAD | Dalil |
 |---|---:|---:|---|
-| Barcha Markdown | 108 | **121** | Recursive \`git/trees/main?recursive=1\`, audited SHA |
+| Barcha Markdown | 108 | **121** | Recursive `git/trees/main?recursive=1`, audited SHA |
 | 00–13 arxitektura yo‘nalishlari | 14 | **14** | [Module Registry](../../MODULE_REGISTRY.md) va modul fayllari |
-| \`docs/modules/\` | 17 | **17** | [modullar](../modules/) |
-| \`docs/adr/\` | 90 | **97** | [ADRlar](../adr/) |
+| `docs/modules/` | 17 | **17** | [modullar](../modules/) |
+| `docs/adr/` | 90 | **97** | [ADRlar](../adr/) |
 | Root registries | 0 | **5** | [DECISIONS](../../DECISIONS.md), [REQUIREMENTS](../../REQUIREMENTS.md), [MODULE_REGISTRY](../../MODULE_REGISTRY.md), [OPEN_QUESTIONS](../../OPEN_QUESTIONS.md), [CHANGELOG](../../CHANGELOG.md) |
 | README | 1 | **1** | [README](../../README.md) |
 | Birinchi audit | Baseline’dan so‘ng | **1** | [ARCHITECTURE_REVIEW](ARCHITECTURE_REVIEW.md) |
@@ -70,7 +92,9 @@ GitHub connector orqali **main HEAD qaytadan tekshirildi**, uning recursive tree
 
 ---
 
-## 3. Original APPROVED biznes invariantlari va PROPOSED chegarasi
+---
+
+## 5. APPROVED Business Rules Validation
 
 | ID | User-approved invariant | Current document evidence | Status |
 |---|---|---|---|
@@ -91,7 +115,9 @@ GitHub connector orqali **main HEAD qaytadan tekshirildi**, uning recursive tree
 
 ---
 
-## 4. AR-001…AR-013 — independent Round 2 status matrix
+---
+
+## 6. AR-001 — AR-013 Findings Matrix
 
 Bir AR uchun bir necha holat berilishi mumkin. “Harmonized” user-approved degani emas. **Severity Round 2 design risks**, historical severity avtomatik ko‘chirilmadi.
 
@@ -111,20 +137,11 @@ Bir AR uchun bir necha holat berilishi mumkin. “Harmonized” user-approved de
 | **AR-012** | MEDIUM | **FIXED_DOCUMENTATION (matrix only) + HARMONIZED_PROPOSED + MISSING_APPROVAL** | [UX §16.1](../modules/UX_ARCHITECTURE.md) UX-T01…T20 persona × task × forbidden-outcome matrix; §16.2–16.6 search/context/offline/a11y gate; [ADR-UX-004](../adr/ADR-UX-004.md). **No test passed/approved top-20.** | MVP ordering, role/device coverage, users & quantitative targets: 08+00+all domains+user. |
 | **AR-013** | HIGH | **HARMONIZED_PROPOSED + STILL_CONFLICTING + MISSING_APPROVAL** | [Security §17](../modules/SECURITY_ARCHITECTURE.md), [ADR-SEC-002](../adr/ADR-SEC-002.md), [Backend §17](../modules/BACKEND_ARCHITECTURE.md) identity→Multi-Tenant Membership→Security role/grantsni taklif qiladi, **lekin [MODULE_REGISTRY](../../MODULE_REGISTRY.md)** chat 10ga “Identity, membership” vazifasini yozgan; [ADR-MT-002](../adr/ADR-MT-002.md) ayni nomuvofiqlikni qayd etadi; [ADR-BILL-010](../adr/ADR-BILL-010.md) ham “Identity/Security owns memberships” deydi. | **Bitta** TenantMembership writer va role/grant owner, revoke/version policy: 02+10+04+00+user. |
 
-### 4.1 What is really fixed?
-
-1. **AR-006 file existence:** 2 Mobile ADR yaratilgan va ularda yetarli PROPOSED conflict/revocation asoslari bor. **Remaining:** approval va runtime tests.
-2. **AR-007 file existence:** beshta registry yaratilgan. **Remaining:** hujjatlararo status sinxronlash, MR ro‘yxati, individual ADR approvals va oldingi “missing” matnlarini yangilash.
-3. **AR-012 acceptance matrix:** bu faqat “missing matrix” documentary gapni yopadi, **butun AR-012ni yoki real UX quality gate’ni yopmaydi**.
-4. **AR-003 va AR-011:** document taxonomy / staged proposals harmonized, **service architecture yoki external production verification complete degani emas**.
-
-**Approval/evidence pending AR cases: 11/13 (AR-001/002/003/004/005/008/009/010/011/012/013).** AR-006 ham ayrim auth business/technical consentni kutmoqda; shu sabab 11 soni faqat “asosiy tarixiy topilmalar hozircha yopilmagan” klassifikatsiyasi, barcha qolgan individual qarorlar soni emas.
-
 ---
 
-## 5. MR-01…MR-20 — independent Round 2 status matrix
+## 7. MR-01 — MR-20 Requirements Matrix
 
-**MR status legend:** \`SPECIFIED_PROPOSED\` (candidate contract va alternativlar yozilgan); \`DOCUMENTATION_FIXED\` (ilgari yetishmagan qism kiritilgan); \`OPEN_BUSINESS\` (product/price/legal/role policy user decision); \`OPEN_TECH\` (ADR/cross-module technical sign-off yoki evidence); \`NOT_TESTED\` (acceptance dalili yo‘q). Bir nechta maqom normal.
+**MR status legend:** `SPECIFIED_PROPOSED` (candidate contract va alternativlar yozilgan); `DOCUMENTATION_FIXED` (ilgari yetishmagan qism kiritilgan); `OPEN_BUSINESS` (product/price/legal/role policy user decision); `OPEN_TECH` (ADR/cross-module technical sign-off yoki evidence); `NOT_TESTED` (acceptance dalili yo‘q). Bir nechta maqom normal.
 
 | MR | Round 2 status | GitHub dalil va nima o‘zgardi | Qolgan majburiy qaror |
 |---|---|---|---|
@@ -153,7 +170,9 @@ Bir AR uchun bir necha holat berilishi mumkin. “Harmonized” user-approved de
 
 ---
 
-## 6. Cross-module consistency matrix
+---
+
+## 8. Cross-Module Architecture Consistency
 
 | Juftlik yoki zanjir | Current design assessment | Dalil |
 |---|---|---|
@@ -170,7 +189,9 @@ Bir AR uchun bir necha holat berilishi mumkin. “Harmonized” user-approved de
 | UX ↔ All business modules | **HARMONIZED_PROPOSED**, testing/MVP approval open | [UX §16](../modules/UX_ARCHITECTURE.md), [ADR-UX-004](../adr/ADR-UX-004.md) |
 | Localization ↔ Search ↔ Mobile ↔ Web | **HARMONIZED_PROPOSED**, exact identifiers protected, rollout search test unrun | [Localization §15](../modules/LOCALIZATION_ARCHITECTURE.md), [ADR-LOC-003](../adr/ADR-LOC-003.md), [UX §16.3](../modules/UX_ARCHITECTURE.md) |
 
-### 6.1 Authoritative transaction/event candidates, not implementation fact
+---
+
+## 9. Domain Ownership & Contract Conflicts
 
 - **Company/branch context:** Tenant Registry resolves immutable tenant ownership; company legal/accounting identity and Billing payer are **different pending models**. No producer guesses wallet from tenant ID. [MT §15](../modules/MULTI_TENANT_ARCHITECTURE.md), [Billing §19.1](../modules/BILLING_ARCHITECTURE.md).
 - **Catalog/Price:** Catalog writer for Product/SKU/UoM, Pricing writer for PriceList; Sales consumes resolved snapshot, Inventory owns physical movement and reservation, Finance owns ERP GL, Billing owns SaaS charge. [Sales §11.1](../modules/SALES_INVENTORY.md), [Backend §17](../modules/BACKEND_ARCHITECTURE.md).
@@ -181,9 +202,22 @@ Bir AR uchun bir necha holat berilishi mumkin. “Harmonized” user-approved de
 
 ---
 
-## 7. Security, Scaling, Billing va UX quality gates
+**Aniqlanmagan authority ziddiyati:** [`MODULE_REGISTRY.md`](../../MODULE_REGISTRY.md) Security uchun membership mas’uliyatini umumiy tarzda ko‘rsatadi, [Security §17](../modules/SECURITY_ARCHITECTURE.md) va [ADR-MT-002](../adr/ADR-MT-002.md) esa tenant membership state uchun Multi-Tenantni canonical writer sifatida taklif qiladi. [ADR-BILL-010](../adr/ADR-BILL-010.md) “Identity/Security owns memberships” ifodasini ishlatadi. Bu **STILL_CONFLICTING PROPOSED ownership wording**, biror APPROVED qarorni inkor etmaydi. **Owner:** 00/02/04/10/01. **Next:** bitta source-of-truth, role/grant va revocation contractni kelishish.
 
-### 7.1 Security and tenant isolation — **DESIGNED PROPOSED / NOT VERIFIED**
+---
+
+## 10. Billing & Financial Integrity Review
+
+Manbalar: [Billing §19.1–19.7](../modules/BILLING_ARCHITECTURE.md), [Finance addendum](../modules/FINANCE_ARCHITECTURE.md), [FIN-001](../adr/FIN-001.md), [ADR-BILL-002](../adr/ADR-BILL-002.md), [ADR-BILL-003](../adr/ADR-BILL-003.md), [ADR-BILL-006](../adr/ADR-BILL-006.md).
+
+- Billing Wallet/credit ledger **not** tenant ERP cash/GL/AR; FIN-001 provenance unverified.
+- Ledger append-only, once-only economic effect, verified payment top-up, price-version snapshots, reversal/adjustment instead of mutation — all technical mechanisms PROPOSED, not tested.
+- Core business invariants unchanged: **1 credit=10 so‘m; only actual Seat + Business Usage + Resource Usage; one calendar month negative; no estimated credit ceiling**.
+- **STOP before coding:** negative window interpretation, refill/reset/expiry/suspension, chargeable document type/event, imported historical docs, cancellation/refund, late event effective month, seat eligibility/proration, volume thresholds/tier stacking, legal payer mapping. UI must distinguish posted charge from billable candidate/queued sync and invoice from SaaS statement.
+
+---
+
+## 11. Multi-Tenant & Security Review
 
 Manbalar: [SECURITY §17–19](../modules/SECURITY_ARCHITECTURE.md), [ADR-SEC-003](../adr/ADR-SEC-003.md), [ADR-SEC-004](../adr/ADR-SEC-004.md), [ADR-SEC-010](../adr/ADR-SEC-010.md), [MT ADR-001](../adr/ADR-MT-001.md).
 
@@ -193,7 +227,9 @@ Manbalar: [SECURITY §17–19](../modules/SECURITY_ARCHITECTURE.md), [ADR-SEC-00
 
 **Specific residual:** [MODULE_REGISTRY](../../MODULE_REGISTRY.md) assigns “Identity, membership, RBAC/ABAC authorization” to Security; [Security §17](../modules/SECURITY_ARCHITECTURE.md) and [ADR-MT-002](../adr/ADR-MT-002.md) prefer Multi-Tenant as writable membership owner; [ADR-BILL-010](../adr/ADR-BILL-010.md) wording can be read as Identity/Security membership source. Resolve single writer before schema/API work.
 
-### 7.2 Database, HA, scaling, performance — **HARMONIZED_PROPOSED / NOT MEASURED**
+---
+
+## 12. Database & Infrastructure Compatibility
 
 Manbalar: [DB §7–11/§17](../modules/DATABASE_ARCHITECTURE.md), [Infra §3–12/§18](../modules/INFRA_ARCHITECTURE.md), [ADR-INFRA-002](../adr/ADR-INFRA-002.md), [ADR-DB-007](../adr/ADR-DB-007.md), [ADR-BE-005](../adr/ADR-BE-005.md).
 
@@ -203,16 +239,45 @@ Manbalar: [DB §7–11/§17](../modules/DATABASE_ARCHITECTURE.md), [Infra §3–
 - Performance risk: hot SKU locks, high-volume immutable billing ledger, outbox/worker backlog, slow cross-domain reporting/search, offline device bursts, media uploads, heavy-tenant noisy neighbor, RLS overhead, WAL growth, primary contention, cache auth staleness.
 - Quality gate: per-tenant peak/soak/concurrent sale+stock/billing month-end, DB locks/pool wait, p95/p99 and throughput, cost per workload; backup chain restore/drills and failover when selected. **No achieved latency/TPS/restore RPO/RTO benchmark is claimed**.
 
-### 7.3 Billing/Finance integrity — **PROPOSED CONTRACTS / OPEN BUSINESS APPROVAL**
+---
 
-Manbalar: [Billing §19.1–19.7](../modules/BILLING_ARCHITECTURE.md), [Finance addendum](../modules/FINANCE_ARCHITECTURE.md), [FIN-001](../adr/FIN-001.md), [ADR-BILL-002](../adr/ADR-BILL-002.md), [ADR-BILL-003](../adr/ADR-BILL-003.md), [ADR-BILL-006](../adr/ADR-BILL-006.md).
+## 13. Sales, Inventory & Finance Lifecycle
 
-- Billing Wallet/credit ledger **not** tenant ERP cash/GL/AR; FIN-001 provenance unverified.
-- Ledger append-only, once-only economic effect, verified payment top-up, price-version snapshots, reversal/adjustment instead of mutation — all technical mechanisms PROPOSED, not tested.
-- Core business invariants unchanged: **1 credit=10 so‘m; only actual Seat + Business Usage + Resource Usage; one calendar month negative; no estimated credit ceiling**.
-- **STOP before coding:** negative window interpretation, refill/reset/expiry/suspension, chargeable document type/event, imported historical docs, cancellation/refund, late event effective month, seat eligibility/proration, volume thresholds/tier stacking, legal payer mapping. UI must distinguish posted charge from billable candidate/queued sync and invoice from SaaS statement.
+**Current contract (PROPOSED; AR-005 / MR-07/08):** [Sales §11.2–11.3](../modules/SALES_INVENTORY.md), [Finance reconciliation](../modules/FINANCE_ARCHITECTURE.md), [Database §6/§17](../modules/DATABASE_ARCHITECTURE.md), [ADR-SI-012](../adr/ADR-SI-012.md), [FIN-002](../adr/FIN-002.md).
 
-### 7.4 UX/UI — **20 WORKFLOWS DOCUMENTED; NO ACCEPTANCE PASSED**
+| Committed lifecycle fact | Physical inventory | ERP Finance/GL | SaaS Billing | Approval state |
+|---|---|---|---|---|
+| Sales draft / submit | No physical movement | No default journal | Charge eligibility OPEN | PROPOSED |
+| Sales order confirm | Optional reservation; **no physical debit** | AR/GL not presumed | Document charge trigger OPEN | PROPOSED |
+| Reservation / release / expiry | Available quantity changes; on-hand unchanged | No default posting | Classification OPEN | PROPOSED |
+| Dispatch posted | Exactly one StockMovement/StockBalance effect | COGS/valuation/recognition trigger OPEN | Only independently approved source-document charge | PROPOSED |
+| Invoice posted | **No second stock effect** | AR/revenue/tax only on approved policy | Independent Billing eligibility OPEN | PROPOSED |
+| Goods receipt posted | Exactly one accepted stock increment | AP/GRNI and valuation trigger OPEN | Document type policy OPEN | PROPOSED |
+| Return / correction | Compensating linked physical effect if original exists | Credit note/linked GL reversal only if appropriate | Separate credit/adjustment, **not automatic refund** | PROPOSED |
+
+**Remaining text conflict (HIGH):** [Database §6](../modules/DATABASE_ARCHITECTURE.md) still groups SalesDocument posting, StockMovement and Finance journal within one DB transaction, while §17 and domain contracts explicitly separate typed domain facts and owner-specific ACID+outbox/retry boundaries. This can yield incompatible generated orchestration. **Next owner:** 03+04+05+06; select a canonical transaction matrix, leave obsolete proposal visibly historical without silently rewriting approved data.
+
+**Concurrency/monetary invariant proposals:** append-only StockMovement, atomically updated StockBalance, reservation row locks/conditional updates, deterministic lock order, stable business idempotency keys, Finance journal debit/credit consistency and original-linked reversals. [ADR-SI-002](../adr/ADR-SI-002.md), [ADR-SI-003](../adr/ADR-SI-003.md), [ADR-DB-004](../adr/ADR-DB-004.md). **Untested**; valuation, negative stock, reservation TTL, journal recognition remain OPEN.
+
+---
+
+## 14. Mobile Offline & Integration Compatibility
+
+**Mobile/Offline (AR-006/009, MR-12):** [ADR-MOB-004](../adr/ADR-MOB-004.md), [ADR-MOB-009](../adr/ADR-MOB-009.md), [MOBILE_ARCHITECTURE](../modules/MOBILE_ARCHITECTURE.md), [MOBILE_OFFLINE](../modules/MOBILE_OFFLINE.md) define scoped offline outbox, original operation_id, distinct accepted/rejected/conflict/retryable/unknown, reauthorization on reconnect and independent server acceptance. Revoked offline devices cannot be guaranteed instantly wiped; token TTL, quarantine/deletion and long-offline retention OPEN. No offline stock/GL/SaaS billing posting is authorized.
+
+**Billing attribution from offline and external docs:** [Billing §19.2–19.4](../modules/BILLING_ARCHITECTURE.md), [ADR-BILL-003](../adr/ADR-BILL-003.md) separate untrusted device occurrence, server-accepted fact, durable receipt, rating and posting clocks. Calendar-month attribution, closed invoice adjustment and imported historical charge eligibility are **OPEN BUSINESS**; actual usage/negative one-calendar-month invariant and no credit ceiling remain intact.
+
+**Integrations:** [INTEGRATION_ARCHITECTURE](../modules/INTEGRATION_ARCHITECTURE.md), [ADR-INT-002](../adr/ADR-INT-002.md), [ADR-INT-003](../adr/ADR-INT-003.md), [ADR-INT-004](../adr/ADR-INT-004.md) define tenant/provider/connection-scoped immutable external IDs, staged mapping, reconciliation and guarded outbound single-writer approach **PROPOSED**. No SalesDoc LIVE_VERIFIED API result or production cutover evidence. 
+
+**AR-011 taxonomy harmonized:** [Integration Architecture](../modules/INTEGRATION_ARCHITECTURE.md) currently categorizes SalesDoc as **DOCUMENTED, not LIVE_VERIFIED**. [ADR-INT-001](../adr/ADR-INT-001.md) adopts same taxonomy; production auth, endpoint behavior and bidirectional write evidence not tested.
+
+**Additional Round 2 watch, not a separate historical AR count:** Baseline [old Integration Architecture at baseline](https://github.com/yakhyodev/erp-saas-architecture/blob/016573c8426ed3ea3b1eacbd0dc81adb67861220/docs/modules/INTEGRATION_ARCHITECTURE.md) contained external provider documentation links, method/capability matrix, method-specific throttles, CS_id/SD_id/code_1C nuances, response errors, migration details. Current [Integration Architecture](../modules/INTEGRATION_ARCHITECTURE.md) is a much shorter reconciled taxonomy/contract memo and has **lost much of that source-specific evidence in its primary module doc**. Current [ADR-INT-001…005](../adr/) still summarize normalization, mappings, staging and cutover, but they do not replace that detailed provider capability catalog. **Recommendation:** preserve original documentation-derived evidence in a separate versioned PROPOSED provider appendix/compatibility matrix; explicitly distinguish DOCUMENTED from LIVE_VERIFIED. This regression is a **documentation traceability gap**, not proof of API failure. Do not silently assert method throttles are live-verified.
+
+---
+
+---
+
+## 15. UX/UI Quality Review
 
 Manbalar: [UX §1, §3–11, §16](../modules/UX_ARCHITECTURE.md), [ADR-UX-002](../adr/ADR-UX-002.md), [ADR-UX-003](../adr/ADR-UX-003.md), [ADR-UX-004](../adr/ADR-UX-004.md), [ADR-UX-006](../adr/ADR-UX-006.md), [Localization §15](../modules/LOCALIZATION_ARCHITECTURE.md).
 
@@ -226,56 +291,71 @@ Manbalar: [UX §1, §3–11, §16](../modules/UX_ARCHITECTURE.md), [ADR-UX-002](
 
 **Top-20 candidate matrix now exists:** UX-T01…UX-T20 in [UX §16.1](../modules/UX_ARCHITECTURE.md). Its candidate personas, paths and forbidden transitions are **not a user-approved MVP list or verified usability study**. Proposed (unapproved) 2–3 navigation-action discoverability, p75 search <1s, LCP<=2.5s, INP<=200ms, CLS<=0.1 are targets, not measured success. UX release gates G0…G5 (§16.6) remain open. Need real role/device/network/dataset/locale testing and comparison before superiority over Sales Doctor can be claimed.
 
-### 7.5 Integrations/evidence regression watch
+---
 
-**AR-011 taxonomy harmonized:** [Integration Architecture](../modules/INTEGRATION_ARCHITECTURE.md) currently categorizes SalesDoc as **DOCUMENTED, not LIVE_VERIFIED**. [ADR-INT-001](../adr/ADR-INT-001.md) adopts same taxonomy; production auth, endpoint behavior and bidirectional write evidence not tested.
+## 16. Localization & Alphabet Review
 
-**Additional Round 2 watch, not a separate historical AR count:** Baseline [old Integration Architecture at baseline](https://github.com/yakhyodev/erp-saas-architecture/blob/016573c8426ed3ea3b1eacbd0dc81adb67861220/docs/modules/INTEGRATION_ARCHITECTURE.md) contained external provider documentation links, method/capability matrix, method-specific throttles, CS_id/SD_id/code_1C nuances, response errors, migration details. Current [Integration Architecture](../modules/INTEGRATION_ARCHITECTURE.md) is a much shorter reconciled taxonomy/contract memo and has **lost much of that source-specific evidence in its primary module doc**. Current [ADR-INT-001…005](../adr/) still summarize normalization, mappings, staging and cutover, but they do not replace that detailed provider capability catalog. **Recommendation:** preserve original documentation-derived evidence in a separate versioned PROPOSED provider appendix/compatibility matrix; explicitly distinguish DOCUMENTED from LIVE_VERIFIED. This regression is a **documentation traceability gap**, not proof of API failure. Do not silently assert method throttles are live-verified.
+**Approved language scope:** uz/en/ru public interfaces, plus an internal hidden option for future Uzbek alphabet; no automatic public fourth locale. [DECISIONS BIZ-009](../../DECISIONS.md), [LOCALIZATION_ARCHITECTURE §1/§7/§15](../modules/LOCALIZATION_ARCHITECTURE.md).
+
+**Current PROPOSED versioned contracts:** [ADR-LOC-001](../adr/ADR-LOC-001.md) BCP47-like public IDs and preference/fallback, [ADR-LOC-002](../adr/ADR-LOC-002.md) original business names/document/amount/ID preservation, [ADR-LOC-003](../adr/ADR-LOC-003.md) NFC and reversible search-only Uzbek apostrophe/Latin/Cyrillic aliases, [ADR-LOC-004](../adr/ADR-LOC-004.md) hidden default-OFF alphabet feature flag with internal preview.
+
+- Locale switch **must not** alter canonical Product/SKU, INN/barcode, financial values, document numbers, tenant IDs, event identity or source evidence.
+- Authorized global search includes results, counts, recents, suggestions, caches and reindex jobs; normalization aliases cannot leak tenant/branch data or silently mutate originals. [UX §16.3](../modules/UX_ARCHITECTURE.md), [Security §19](../modules/SECURITY_ARCHITECTURE.md).
+- Mobile offline locale bundles/fallback and web UI must share stable error codes and translation keys, but do not make runtime locale authority for operations.
+- **OPEN:** platform default, exact alias/transliteration collision policy, normalizer/index cutover, official future alphabet rules, device/locale/a11y benchmark, hidden rollout approval. No tests or public activation claimed.
+
+**Result:** **HARMONIZED_PROPOSED**, no demonstrated locale or usability test success. **Owner:** 13+08+09+10+04. **Next:** agreed language QA scenarios and versioned index acceptance matrix.
 
 ---
 
-## 8. Nine Codex architecture gates and evidence
+## 17. Fixed Issues
 
-| Gate | Evidence at current HEAD | Verdict | Required close condition |
+1. **AR-006 file existence:** 2 Mobile ADR yaratilgan va ularda yetarli PROPOSED conflict/revocation asoslari bor. **Remaining:** approval va runtime tests.
+2. **AR-007 file existence:** beshta registry yaratilgan. **Remaining:** hujjatlararo status sinxronlash, MR ro‘yxati, individual ADR approvals va oldingi “missing” matnlarini yangilash.
+3. **AR-012 acceptance matrix:** bu faqat “missing matrix” documentary gapni yopadi, **butun AR-012ni yoki real UX quality gate’ni yopmaydi**.
+4. **AR-003 va AR-011:** document taxonomy / staged proposals harmonized, **service architecture yoki external production verification complete degani emas**.
+
+**Approval/evidence pending AR cases: 11/13 (AR-001/002/003/004/005/008/009/010/011/012/013).** AR-006 ham ayrim auth business/technical consentni kutmoqda; shu sabab 11 soni faqat “asosiy tarixiy topilmalar hozircha yopilmagan” klassifikatsiyasi, barcha qolgan individual qarorlar soni emas.
+
+---
+
+---
+
+## 18. Remaining Open Questions
+
+**Historical issue-level accounting:** 13 original AR findings remain in the issue register. Exactly **2 documentation existence gaps** are fixed (AR-006 two ADR files; AR-007 five root registries); **11 other AR findings** still require domain sign-off/user choice/evidence. Fixed file existence **does not close AR-006 policy or AR-007 registry synchronization**, so issue-level fully signed-off closures are **0/13**. AR-012’s 20-workflow **matrix itself** is now documented, but acceptance is not passed.
+
+**All 20 MR requirements remain OPEN in some form**; they now have candidate technical contracts in multiple owning modules but lack an independently completed approval/acceptance ledger. Detailed status, owner and links are in **§7**. Do not present 20 as 20 equal business approvals — MR-10/11/15/17/19 include technical sign-off and test evidence, and MR-18 is MVP scope choice.
+
+**Critical priority:** AR-001 payer/wallet/cardinality; AR-004 FIN-001 provenance; AR-005 posted lifecycle and GL policy; AR-008 Party/Payer/ReceivableOwner; AR-009 time attribution/negative month; AR-010 chargeable documents; AR-013 membership single owner; plus MR-02/03/05/06/11/14/16 approvals. [Central open questions](../../OPEN_QUESTIONS.md), [Billing §19](../modules/BILLING_ARCHITECTURE.md), [Finance addendum](../modules/FINANCE_ARCHITECTURE.md), [Security §17–19](../modules/SECURITY_ARCHITECTURE.md).
+
+**Documentation carryover:** [OPEN_QUESTIONS](../../OPEN_QUESTIONS.md) still calls AR-006/007 missing, although real files now exist; its MR-01…MR-20 canonical status/owner register is incomplete. Corrections proposed under **§20**, not executed.
+
+---
+
+## 19. Risk Register & Severity
+
+The severity below is the **current design-risk categorization** of the existing 13 AR issues, not independently confirmed production defects or new APPROVED conflicts. Each row’s evidence/owners/actions are documented in **§6**.
+
+| Risk tier | AR IDs | Count | Predominant impact |
+|---|---|---:|---|
+| **HIGH** | AR-001, AR-002, AR-004, AR-005, AR-008, AR-009, AR-010, AR-013 | **8** | Money ownership/attribution, duplicate stock/GL/charge, identity and rights boundary |
+| **MEDIUM** | AR-003, AR-006, AR-007, AR-011, AR-012 | **5** | HA stage, offline ADR/registry currency, external API evidence, UX acceptance |
+| **CRITICAL confirmed** | — | **0** | No user-approved-vs-approved conflict or production breach proven in documentation audit |
+
+**Additional Round-2 documentary watch items (NOT historical AR additions):**
+
+| ID | Severity | Evidence | Owner / next action |
 |---|---|---|---|
-| **GATE-01** Decision status/provenance | [DECISIONS](../../DECISIONS.md) created; [FIN-001](../adr/FIN-001.md) status without independent user proof; ADR coverage incomplete | **BLOCKED** | Source-linked approval record and complete ADR registry; FIN-001 provenance |
-| **GATE-02** Ownership/cardinality | [MT §15](../modules/MULTI_TENANT_ARCHITECTURE.md), [Sales §11](../modules/SALES_INVENTORY.md), [CRM §11](../modules/CRM_DISTRIBUTION.md), [Security §17](../modules/SECURITY_ARCHITECTURE.md) | **BLOCKED** | Resolve BillingAccount, Catalog, Party, Membership canonical writers |
-| **GATE-03** Tenant/security | [ADR-MT-001](../adr/ADR-MT-001.md), [Security §19](../modules/SECURITY_ARCHITECTURE.md) proposed RLS/guard tests | **BLOCKED** | Isolation ADR decision; auth scope sign-off; test contract accepted |
-| **GATE-04** Billing integrity | [Billing §19](../modules/BILLING_ARCHITECTURE.md), [ADR-BILL-009](../adr/ADR-BILL-009.md), [ADR-BILL-010](../adr/ADR-BILL-010.md) | **BLOCKED** | Approve seat, document, discount, wallet, negative month/late usage |
-| **GATE-05** Sales/Stock/Finance | [Sales §11.2](../modules/SALES_INVENTORY.md), [FIN-002](../adr/FIN-002.md), [DB §6/§17](../modules/DATABASE_ARCHITECTURE.md) | **BLOCKED** | One transaction/event model and Finance GL/AR/COGS/tax trigger |
-| **GATE-06** API/offline/integrations | [Backend §17](../modules/BACKEND_ARCHITECTURE.md), [MOB-004/009](../modules/MOBILE_ARCHITECTURE.md), [Integration](../modules/INTEGRATION_ARCHITECTURE.md) | **BLOCKED** | Stable signed-off API/event/adapter versions, external evidence, conflict policy |
-| **GATE-07** Infra/DR/perf | [Infra §18](../modules/INFRA_ARCHITECTURE.md), [ADR-DB-007](../adr/ADR-DB-007.md) | **BLOCKED** | Production Stage A/B, SLO/RPO/RTO and agreed load/restore test plan |
-| **GATE-08** UX/UI | [UX §16](../modules/UX_ARCHITECTURE.md), [Localization §15](../modules/LOCALIZATION_ARCHITECTURE.md) | **READY_WITH_CONDITIONS as design inputs; gate BLOCKED** | MVP task/role approval and measurable UX/a11y/test profiles |
-| **GATE-09** Documentation consistency | Five registries exist; [OPEN_QUESTIONS](../../OPEN_QUESTIONS.md) stale AR-006/007, MR tracking missing; root detailed ADR index incomplete | **BLOCKED** | Reconcile statuses, MR-01…20, cross-module links and sign-offs |
+| R2-DOC-01 | MEDIUM | [OPEN_QUESTIONS](../../OPEN_QUESTIONS.md) AR-006/007 still “missing”; 97 ADRs not indexed with individual status and MR-01…20 missing as separate live tracking | 00+14: propose central-registry sync under separate authorization |
+| R2-DOC-02 | MEDIUM | [Integration](../modules/INTEGRATION_ARCHITECTURE.md) shorter than [baseline provider evidence](https://github.com/yakhyodev/erp-saas-architecture/blob/016573c8426ed3ea3b1eacbd0dc81adb67861220/docs/modules/INTEGRATION_ARCHITECTURE.md) | 12: versioned DOCUMENTED provider evidence appendix, not false production verification |
+| R2-TXN-01 | HIGH | [Database §6 vs §17](../modules/DATABASE_ARCHITECTURE.md) differences described in AR-005 | 03+04+05+06: canonical typed transaction/event/economic effect contract |
 
-**Gate status is an architecture-only prerequisite**, not a claim of production tests already passing. Approved implementation readiness differs from operational/production readiness.
+**Potential runtime threat classes only, not observed findings:** tenant data leakage through pool/search/cache/jobs, double-charge/reversal errors, hot inventory SKU contention, denied/revoked offline sync, lost WAL/PITR, HA failover split-brain, UX authorization side-channels, localization alias collisions. Test gates are PROPOSED and NOT EXECUTED. See **§10–§16**.
 
 ---
 
-## 9. Codex readiness by module
-
-| # | Modul | Result | Dalil / blocking condition |
-|---|---|---|---|
-| 00 | Master Architecture | **BLOCKED** | [Master §15](../modules/MASTER_ARCHITECTURE.md), [registries](../../DECISIONS.md): ownership, registry, provenance |
-| 01 | Billing | **BLOCKED** | [Billing §19](../modules/BILLING_ARCHITECTURE.md): rating/Seat/month/account choices |
-| 02 | Multi-Tenant | **BLOCKED** | [MT §15](../modules/MULTI_TENANT_ARCHITECTURE.md): cardinality and membership/placement |
-| 03 | Database | **BLOCKED** | [DB §6/§17](../modules/DATABASE_ARCHITECTURE.md): transaction contradiction, HA/isolation choice |
-| 04 | Backend | **BLOCKED** | [Backend §17](../modules/BACKEND_ARCHITECTURE.md): canonical contracts, approved platform stack |
-| 05 | Sales & Inventory | **BLOCKED** | [Sales §11](../modules/SALES_INVENTORY.md): ownership, GL trigger, stock/charge policy |
-| 06 | Finance & Accounting | **BLOCKED** | [Finance addendum](../modules/FINANCE_ARCHITECTURE.md), [FIN-001](../adr/FIN-001.md): tax, GL, provenance |
-| 07 | CRM & Distribution | **BLOCKED** | [CRM §11](../modules/CRM_DISTRIBUTION.md): Party/payer scope and data governance |
-| 08 | UX/UI | **READY_WITH_CONDITIONS** | [UX §16](../modules/UX_ARCHITECTURE.md): concrete matrix, unapproved role scope and unmeasured user tests |
-| 09 | Mobile & Offline | **BLOCKED** | [MOB-004](../adr/ADR-MOB-004.md)/[009](../adr/ADR-MOB-009.md): present, but offline TTL/authorization policy unapproved |
-| 10 | Security & Permissions | **BLOCKED** | [Security §17–19](../modules/SECURITY_ARCHITECTURE.md): membership authority, RLS, auth choices |
-| 11 | Infrastructure & Scaling | **BLOCKED** | [Infra §18](../modules/INFRA_ARCHITECTURE.md): Stage A/B, numeric SLO/RPO/RTO |
-| 12 | Integrations | **BLOCKED** | [Integration](../modules/INTEGRATION_ARCHITECTURE.md): live evidence, import/cutover policy, provider appendix |
-| 13 | Localization & Alphabet | **READY_WITH_CONDITIONS** | [Localization §15](../modules/LOCALIZATION_ARCHITECTURE.md): language readiness + proposed search/locale/hidden rollout and QA |
-
-**Sum: 12 BLOCKED, 2 READY_WITH_CONDITIONS, 0 READY. Whole ERP SaaS: BLOCKED for Codex product-code implementation.** Individual design-review tasks may continue, not executable application development without separate user authorization.
-
----
-
-## 10. Priority-ranked USER DECISION PACKET (none approved by this review)
+## 20. Required Decisions & Responsible Modules
 
 The following are **recommendations only**. Every alternative below requires product/domain owner review, user approval for business consequences and an ADR status update with source evidence.
 
@@ -301,7 +381,7 @@ The following are **recommendations only**. Every alternative below requires pro
 
 ---
 
-## 11. Suggested patches to OTHER Markdown files — **NOT APPLIED**
+### Central documentation sync patches — proposed, NOT APPLIED
 
 Only this new Round 2 review may be committed now; below are proposed documentation deltas for a later separately approved task:
 
@@ -320,12 +400,97 @@ Only this new Round 2 review may be committed now; below are proposed documentat
 
 ---
 
-## 12. Final risks, verdict and next sequence
+---
+
+## 21. Codex Implementation Readiness
+
+| Gate | Evidence at current HEAD | Verdict | Required close condition |
+|---|---|---|---|
+| **GATE-01** Decision status/provenance | [DECISIONS](../../DECISIONS.md) created; [FIN-001](../adr/FIN-001.md) status without independent user proof; ADR coverage incomplete | **BLOCKED** | Source-linked approval record and complete ADR registry; FIN-001 provenance |
+| **GATE-02** Ownership/cardinality | [MT §15](../modules/MULTI_TENANT_ARCHITECTURE.md), [Sales §11](../modules/SALES_INVENTORY.md), [CRM §11](../modules/CRM_DISTRIBUTION.md), [Security §17](../modules/SECURITY_ARCHITECTURE.md) | **BLOCKED** | Resolve BillingAccount, Catalog, Party, Membership canonical writers |
+| **GATE-03** Tenant/security | [ADR-MT-001](../adr/ADR-MT-001.md), [Security §19](../modules/SECURITY_ARCHITECTURE.md) proposed RLS/guard tests | **BLOCKED** | Isolation ADR decision; auth scope sign-off; test contract accepted |
+| **GATE-04** Billing integrity | [Billing §19](../modules/BILLING_ARCHITECTURE.md), [ADR-BILL-009](../adr/ADR-BILL-009.md), [ADR-BILL-010](../adr/ADR-BILL-010.md) | **BLOCKED** | Approve seat, document, discount, wallet, negative month/late usage |
+| **GATE-05** Sales/Stock/Finance | [Sales §11.2](../modules/SALES_INVENTORY.md), [FIN-002](../adr/FIN-002.md), [DB §6/§17](../modules/DATABASE_ARCHITECTURE.md) | **BLOCKED** | One transaction/event model and Finance GL/AR/COGS/tax trigger |
+| **GATE-06** API/offline/integrations | [Backend §17](../modules/BACKEND_ARCHITECTURE.md), [MOB-004/009](../modules/MOBILE_ARCHITECTURE.md), [Integration](../modules/INTEGRATION_ARCHITECTURE.md) | **BLOCKED** | Stable signed-off API/event/adapter versions, external evidence, conflict policy |
+| **GATE-07** Infra/DR/perf | [Infra §18](../modules/INFRA_ARCHITECTURE.md), [ADR-DB-007](../adr/ADR-DB-007.md) | **BLOCKED** | Production Stage A/B, SLO/RPO/RTO and agreed load/restore test plan |
+| **GATE-08** UX/UI | [UX §16](../modules/UX_ARCHITECTURE.md), [Localization §15](../modules/LOCALIZATION_ARCHITECTURE.md) | **READY_WITH_CONDITIONS as design inputs; gate BLOCKED** | MVP task/role approval and measurable UX/a11y/test profiles |
+| **GATE-09** Documentation consistency | Five registries exist; [OPEN_QUESTIONS](../../OPEN_QUESTIONS.md) stale AR-006/007, MR tracking missing; root detailed ADR index incomplete | **BLOCKED** | Reconcile statuses, MR-01…20, cross-module links and sign-offs |
+
+**Gate status is an architecture-only prerequisite**, not a claim of production tests already passing. Approved implementation readiness differs from operational/production readiness.
+
+---
+
+### Module-by-module readiness
+
+| # | Modul | Result | Dalil / blocking condition |
+|---|---|---|---|
+| 00 | Master Architecture | **BLOCKED** | [Master §15](../modules/MASTER_ARCHITECTURE.md), [registries](../../DECISIONS.md): ownership, registry, provenance |
+| 01 | Billing | **BLOCKED** | [Billing §19](../modules/BILLING_ARCHITECTURE.md): rating/Seat/month/account choices |
+| 02 | Multi-Tenant | **BLOCKED** | [MT §15](../modules/MULTI_TENANT_ARCHITECTURE.md): cardinality and membership/placement |
+| 03 | Database | **BLOCKED** | [DB §6/§17](../modules/DATABASE_ARCHITECTURE.md): transaction contradiction, HA/isolation choice |
+| 04 | Backend | **BLOCKED** | [Backend §17](../modules/BACKEND_ARCHITECTURE.md): canonical contracts, approved platform stack |
+| 05 | Sales & Inventory | **BLOCKED** | [Sales §11](../modules/SALES_INVENTORY.md): ownership, GL trigger, stock/charge policy |
+| 06 | Finance & Accounting | **BLOCKED** | [Finance addendum](../modules/FINANCE_ARCHITECTURE.md), [FIN-001](../adr/FIN-001.md): tax, GL, provenance |
+| 07 | CRM & Distribution | **BLOCKED** | [CRM §11](../modules/CRM_DISTRIBUTION.md): Party/payer scope and data governance |
+| 08 | UX/UI | **READY_WITH_CONDITIONS** | [UX §16](../modules/UX_ARCHITECTURE.md): concrete matrix, unapproved role scope and unmeasured user tests |
+| 09 | Mobile & Offline | **BLOCKED** | [MOB-004](../adr/ADR-MOB-004.md)/[009](../adr/ADR-MOB-009.md): present, but offline TTL/authorization policy unapproved |
+| 10 | Security & Permissions | **BLOCKED** | [Security §17–19](../modules/SECURITY_ARCHITECTURE.md): membership authority, RLS, auth choices |
+| 11 | Infrastructure & Scaling | **BLOCKED** | [Infra §18](../modules/INFRA_ARCHITECTURE.md): Stage A/B, numeric SLO/RPO/RTO |
+| 12 | Integrations | **BLOCKED** | [Integration](../modules/INTEGRATION_ARCHITECTURE.md): live evidence, import/cutover policy, provider appendix |
+| 13 | Localization & Alphabet | **READY_WITH_CONDITIONS** | [Localization §15](../modules/LOCALIZATION_ARCHITECTURE.md): language readiness + proposed search/locale/hidden rollout and QA |
+
+**Sum: 12 BLOCKED, 2 READY_WITH_CONDITIONS, 0 READY. Whole ERP SaaS: BLOCKED for Codex product-code implementation.** Individual design-review tasks may continue, not executable application development without separate user authorization.
+
+---
+
+**Codex tools:** skills and MCP are available for creative research/implementation *after* formal authorization; they cannot independently turn an OPEN business policy or technical ADR into APPROVED. **Ready** means ready to enter architecture-authorized implementation, not production proven.
+
+---
+
+## 22. Final Audit Verdict
 
 **High residual risk:** economic correctness (wallet/payer/negative month/pricing), stock/Finance GL event-time reconciliation, canonical Party/permissions ownership, mutable source migration, tenant isolation under pool/worker, UX state mismatch. **Medium residual risk:** HA scope without numeric target, performance hot paths, mobile device long-offline privacy, catalog/salesdoc capability loss, registry governance drift. **No production vulnerability or user-approved rule conflict was independently proven** by this document-only review.
 
-**Yakuniy verdict: \`BLOCKED\` for Codex product implementation.** Architecture as a design is substantially better documented than at baseline. Specifically **2 historical missing-document cases are physically fixed (AR-006, AR-007)**, typed workflows and UX matrix documented, and many competing proposals harmonized; **no new business/technical approval** derived from those commits. Eleven remaining historical AR matters require formal approval/sign-off or independent evidence; AR-006 and AR-007 still need registry status cleanup and AR-006 also auth policy approvals.
+**Yakuniy verdict: `BLOCKED` for Codex product implementation.** Architecture as a design is substantially better documented than at baseline. Specifically **2 historical missing-document cases are physically fixed (AR-006, AR-007)**, typed workflows and UX matrix documented, and many competing proposals harmonized; **no new business/technical approval** derived from those commits. Eleven remaining historical AR matters require formal approval/sign-off or independent evidence; AR-006 and AR-007 still need registry status cleanup and AR-006 also auth policy approvals.
 
 **Recommended work order:** (1) user P0 decision packet; (2) domain owners unify actual ownership + lifecycle + billing month/charge policy; (3) technical ADR alignment on database transaction, auth/RLS, HA and API; (4) master/central registry status/provenance patch by separate user authorization; (5) UX top-20 usability and security/performance test plans with real baselines; (6) Round 3 audit; (7) **only explicit implementation permission** allows Codex to write product code.
 
 **Governance:** Do not change historical FIN-001 label without evidence/user action. Do not convert PROPOSED technical options into approved invariants. Do not assume measured benchmarks or tests passed. Do not claim Sales Doctor superiority before same-task comparison. No modifications to branch, repo description, modules, existing ADRs, root registries or historical review are authorized by this Round 2.
+
+**Final Round 2 disposition:** `REVIEWED — CORRECTIONS REQUIRED` / Codex `BLOCKED`. Fixed documentation gaps: **2**. Original issue register: **13**, all still have at least policy/provenance/registry follow-up, with 11 not documentary closed. MR open-register: **20**, requiring appropriately scoped business or technical decisions. The old report remains historically preserved; only this report was editorially reorganized.
+
+---
+
+## 23. References & Evidence
+
+### Immutable commit evidence
+
+- [Audit baseline 016573c8426ed3ea3b1eacbd0dc81adb67861220](https://github.com/yakhyodev/erp-saas-architecture/tree/016573c8426ed3ea3b1eacbd0dc81adb67861220) — 108 Markdown, 90 ADR at baseline; no claim this is current main.
+- [Audited Round-2 source 184b32f7b3dcc9ce8d329ca2dfb7895f06cae905](https://github.com/yakhyodev/erp-saas-architecture/tree/184b32f7b3dcc9ce8d329ca2dfb7895f06cae905) — 121 Markdown, 97 ADR, 17 modules and five registries.
+- [Previous Round-2 review commit 776d5190b696c776ebaa2d0a0549daac9b32873b](https://github.com/yakhyodev/erp-saas-architecture/commit/776d5190b696c776ebaa2d0a0549daac9b32873b) — previous complete report version retained in GitHub history.
+- [Historical first audit](ARCHITECTURE_REVIEW.md) — original AR/MR gap definitions, not current sign-off.
+
+### Central governance
+
+[DECISIONS](../../DECISIONS.md) · [REQUIREMENTS](../../REQUIREMENTS.md) · [MODULE_REGISTRY](../../MODULE_REGISTRY.md) · [OPEN_QUESTIONS](../../OPEN_QUESTIONS.md) · [CHANGELOG](../../CHANGELOG.md) · [README](../../README.md).
+
+### Modules and evidence crosswalk
+
+| Direction | Primary current source | Relevant ADR examples |
+|---|---|---|
+| 00 Master | [Master Architecture](../modules/MASTER_ARCHITECTURE.md) | [ADR-002](../adr/ADR-002-domain-boundaries.md), [ADR-003](../adr/ADR-003-modular-monolith.md) |
+| 01 Billing | [Billing §19](../modules/BILLING_ARCHITECTURE.md) | [BILL-001](../adr/ADR-BILL-001.md), [BILL-006](../adr/ADR-BILL-006.md), [BILL-009](../adr/ADR-BILL-009.md), [BILL-010](../adr/ADR-BILL-010.md) |
+| 02 Multi-Tenant | [Multi-Tenant §15](../modules/MULTI_TENANT_ARCHITECTURE.md) | [MT-001](../adr/ADR-MT-001.md), [MT-002](../adr/ADR-MT-002.md) |
+| 03 Database | [Database §6/§17](../modules/DATABASE_ARCHITECTURE.md) | [DB-003](../adr/ADR-DB-003.md), [DB-004](../adr/ADR-DB-004.md), [DB-007](../adr/ADR-DB-007.md) |
+| 04 Backend | [Backend §17](../modules/BACKEND_ARCHITECTURE.md) | [BE-003](../adr/ADR-BE-003.md), [BE-006](../adr/ADR-BE-006.md) |
+| 05 Sales/Inventory | [Sales §11](../modules/SALES_INVENTORY.md) | [SI-011](../adr/ADR-SI-011.md), [SI-012](../adr/ADR-SI-012.md), [SI-013](../adr/ADR-SI-013.md) |
+| 06 Finance | [Finance architecture](../modules/FINANCE_ARCHITECTURE.md), [Finance accounting](../modules/FINANCE_ACCOUNTING.md) | [FIN-001](../adr/FIN-001.md) (provenance unverified), [FIN-002](../adr/FIN-002.md) |
+| 07 CRM | [CRM §11](../modules/CRM_DISTRIBUTION.md) | [CRM-001](../adr/ADR-CRM-001-domain-ownership.md), [CRM-003](../adr/ADR-CRM-003-salesdoc-adapter.md) |
+| 08 UX | [UX §16](../modules/UX_ARCHITECTURE.md), [historical UX](../modules/UX_UI_ARCHITECTURE.md) | [UX-003](../adr/ADR-UX-003.md), [UX-004](../adr/ADR-UX-004.md), [UX-006](../adr/ADR-UX-006.md) |
+| 09 Mobile | [Mobile](../modules/MOBILE_ARCHITECTURE.md), [Mobile offline](../modules/MOBILE_OFFLINE.md) | [MOB-004](../adr/ADR-MOB-004.md), [MOB-009](../adr/ADR-MOB-009.md) |
+| 10 Security | [Security §17–19](../modules/SECURITY_ARCHITECTURE.md) | [SEC-002](../adr/ADR-SEC-002.md), [SEC-004](../adr/ADR-SEC-004.md) |
+| 11 Infra | [Infra §18](../modules/INFRA_ARCHITECTURE.md) | [INFRA-002](../adr/ADR-INFRA-002.md), [INFRA-004](../adr/ADR-INFRA-004.md) |
+| 12 Integrations | [Integration](../modules/INTEGRATION_ARCHITECTURE.md) | [INT-001](../adr/ADR-INT-001.md), [INT-005](../adr/ADR-INT-005.md) |
+| 13 Localization | [Localization §15](../modules/LOCALIZATION_ARCHITECTURE.md) | [LOC-001](../adr/ADR-LOC-001.md), [LOC-003](../adr/ADR-LOC-003.md), [LOC-004](../adr/ADR-LOC-004.md) |
+
+**Source-use limitation:** references establish what the GitHub documents propose; they do not establish real-world financial correctness, API LIVE_VERIFIED, a completed RLS/security test or quantitative UX superiority.
