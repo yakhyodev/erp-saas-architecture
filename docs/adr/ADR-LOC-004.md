@@ -28,3 +28,6 @@ The officially enacted orthography, effective date and compulsory scope must be 
 
 ## Approval boundary
 Hidden readiness is APPROVED; flag semantics, rollout phases and locale code remain PROPOSED.
+
+## Round 2 proposed hidden rollout and rollback gate — MR-20
+The future-alphabet variant remains strictly **internal and hidden**, feature flag default OFF. When OFF it must not appear in public selectors, locale registry enumeration, external API locale metadata, printed templates or SEO. Internal preview is restricted to explicitly authorized tester + environment/tenant allowlist and auditable change; no public enablement is authorized. Required future gates: verified legal/orthographic standard (effective date OPEN), signed-off glyphs/translations, desktop/mobile/offline/accessibility checks, authorized search and collision tests, stable document/domain identities, tested index+catalog rollback. Rollback disables flag, invalidates affected bundles, returns to compatible current Uzbek Latin catalog and previous search index generation while original domain records remain unchanged. Remote offline device cleanup cannot be promised. **QA NOT RUN; status remains PROPOSED**, while hidden-readiness business requirement remains APPROVED.
