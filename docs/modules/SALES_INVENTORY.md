@@ -159,3 +159,115 @@ New proposed ADRs: [ADR-SI-011](../adr/ADR-SI-011.md), [ADR-SI-012](../adr/ADR-S
 
 ### 11.7 Global synchronization suggestions — not applied
 DECISIONS: register ADR-SI-011/012/013 as PROPOSED; REQUIREMENTS: add distinct facts/no-double-post acceptance; MODULE_REGISTRY: publish ownership proposals with OPEN label; OPEN_QUESTIONS: retain AR-002/005/010 and record catalog, GL, Billing, TTL/valuation/negative stock choices; CHANGELOG: document harmonization. Historical audit baseline unchanged.
+
+
+## 12. ROUND 2 CORRECTION — 2026-10-12 (AR-002/005/008/010; MR-07/08)
+**Status: PROPOSED technical contract, OPEN user/domain business decisions.** Sources: Round 2 review, Backend §18, Database §18, Finance, Billing §20.4, CRM §11, UX §16. Earlier §11 remains as historical clarification. Database §6 old all-domain ACID statement is a historical alternative: §18 recommends owner-local transaction/outbox, **not APPROVED**.
+
+### 12.1 Ownership matrix (AR-002)
+| Domain | Candidate sole writer | Others may only reference/consume | OPEN |
+|---|---|---|---|
+| Catalog/Product/SKU/Category/UoM/conversion | Catalog bounded context (separate from Sales, even if same deployable) | Sales, Inventory, Purchasing, Pricing, CRM | global vs tenant SKU namespace, mapping, physical module location |
+| PriceList/price resolution/version | Pricing | Sales immutable quote/snapshot, CRM supplies segment | discount precedence, currency policy |
+| SalesOrder/Line and commercial confirmation/fulfillment intent | Sales | CRM, Inventory, Finance | partial delivery, warehouse assignment |
+| StockMovement/Balance/Reservation/Warehouse/Transfer/Count | Inventory | Sales, Purchasing, Finance cost reader | negative stock/TTL/valuation/count cutoff |
+| PurchaseOrder/Line and receipt commercial identity | Purchasing | Inventory physical receipt, Finance AP | receipt tolerance |
+| CRM assortment, customer relationship, outlet/agent/route | CRM | Sales refs, Pricing segment | Party master owner |
+| Party master | **OPEN** CRM Party vs shared Party | Finance/Sales/Purchasing refs | merge/legal ID/aliases |
+| ERP Invoice/GL/AR/AP/legal debtor obligation | Finance | Sales and CRM projections | recognition trigger and valuation |
+| SaaS usage charge/Wallet/BillingAccount | Billing | source occurrence candidates | billable types, payer account and refunds |
+
+Catalog tenant-only vs global with tenant mapping vs reference catalogue + company overlays are **OPEN**; no Sales or CRM direct Product/SKU master writes. A Product ID is not an SKU ID. Historical SKU/UoM snapshots persist.
+
+### 12.2 Transition × owner × physical stock × Finance GL × Billing occurrence matrix
+No Billing candidate automatically means charge; Finance ERP GL is separate from SaaS ledger. N=no effect, P=proposed, OPEN=unapproved.
+
+| Transition | Authoritative writer | StockMovement/reservation | Finance GL | Billing source candidate / charge |
+|---|---|---|---|---|
+| Sales DRAFT create/edit | Sales | N/N | N | draft candidate / OPEN |
+| SUBMIT | Sales | N/N | N | submit candidate / OPEN |
+| CONFIRM | Sales | **N physical**; allocation optional OPEN | OPEN contractual commitments, no implicit journal | confirm candidate / OPEN |
+| RESERVE/RELEASE/EXPIRE | Inventory | N physical; reserved changes P | N | reservation candidate / OPEN |
+| PICK/PACK | Sales orchestration, Inventory allocates | N physical | N | pick doc eligibility OPEN |
+| DISPATCH POST | Inventory physical writer; Sales dispatch intent | **P exactly once sellable debit + consume reservation** | Finance COGS/valuation recognition OPEN | dispatch candidate / OPEN |
+| SALES INVOICE ISSUE/POST | Finance | **N; never debit stock again** | Finance AR/revenue/tax policy OPEN | invoice candidate / OPEN |
+| Purchase PO APPROVE | Purchasing | N | OPEN commitment only | PO candidate / OPEN |
+| GOODS RECEIPT POST | Purchasing receipt intent, Inventory physical writer | P exactly once accepted bucket credit | GRNI/cost recognition OPEN | receipt candidate / OPEN |
+| PURCHASE INVOICE POST | Finance | **N; never re-receive** | AP matching/tax OPEN | invoice candidate / OPEN |
+| CUSTOMER RETURN POST | Returns owner + Inventory | P once in inspected/quarantine/eligible bucket | refund/COGS reversal OPEN | return/refund OPEN |
+| SUPPLIER RETURN DISPATCH | Purchasing + Inventory | P once debit | AP/debit note OPEN | supplier return OPEN |
+| TRANSFER DISPATCH/RECEIVE | Inventory | P source→transit / transit→destination as distinct legs | intercompany valuation OPEN | header vs each leg OPEN |
+| COUNT APPROVE / ADJUST POST | Inventory | approval N; posted delta P | gain/loss OPEN | count doc OPEN |
+| CANCEL before posting | Owning document context | N physical; release active reserve | prior GL reversal only when necessary | cancellation charge/refund OPEN |
+| REVERSE after posting | Original owner initiates; Inventory handles stock | compensation **only for posted physical original** | Finance-owned reversal only if GL posted | Billing adjustment/refund **OPEN**, never automatic |
+
+**Invariants:** order confirmation cannot physically decrease stock; only Inventory physical posting writes StockMovement. Dispatch effect unique by posting leg. Invoice is not a second dispatch. Neither Finance journal nor Billing charge is implied by generic SalesDocumentPosted, CRM delivery proof, or UI click. Sales/Purchasing and Inventory may use separate local commits with command/result correlation; partial failures require pending states and reconciliation.
+
+### 12.3 Database/Backend-compatible transaction/event policy (PROPOSED)
+Use owner-local atomic transaction + outbox: Sales order/revision/outbox; Inventory movement, balance, reservation consumption and outbox; Finance balanced journal/inbox/outbox; Billing actual rated charge, wallet ledger/outbox. Cross-domain ACID is NOT assumed. On downstream failure retry via durable inbox; never replay physical posting twice. Compare alternative single cross-domain ACID (simpler instantaneous consistency but tight coupling/enterprise isolation risk) against recommended owner-specific ACID (eventual GL/Billing, recovery/reconciliation), still OPEN overall approval.
+
+Versioned commands: tenant, actor, company/branch, command_id, idempotency_key, payload fingerprint, expected_revision, correlation/causation. Versioned post-commit events: event_id (transport envelope), **business_occurrence_id** (stable semantic identity independent of event ID), aggregate/revision, schema_version, original_occurrence_id, posting_leg_id, occurred_at/server_committed_at. Unique local physical effect (tenant, business_occurrence_id, posting_leg_id); Finance effect key (tenant, business_occurrence_id, journal_kind, policy_version); Billing accepted occurrence+tariff version+charge kind (billing_account mapping OPEN). Inbox unique transport (consumer, tenant, event_id) AND business-effect dedup. Same key/different payload = conflict. Order only guaranteed per aggregate revision; out-of-order hold/reconcile. Reversal references original, no over-reversal. Reconcile source dispatch ↔ stock ledger, stock ledger ↔ balance, physical facts ↔ Finance posted journals and eligible occurrences ↔ Billing charges.
+
+### 12.4 Billable document mapping (all OPEN — AR-010)
+| Class | Candidate charging transition | Partial/cancel/import rule to decide |
+|---|---|---|
+| SalesOrder | create, submit, confirm or close | one canonical ID, amendment as new delta vs same base |
+| Dispatch/Shipment | dispatch POST or no extra charge | split shipments must not double-base-charge unless tariff expressly allows |
+| PurchaseOrder | approve/close | amended or cancelled POs |
+| GoodsReceipt | inspect/post | split receipts, supplier returns |
+| ERP Sales/Purchase Invoice | issue/post | Finance document separate identity |
+| Customer/Supplier Return | authorize/post/reverse | correction vs refundable paid usage |
+| Transfer | dispatch/receive/close | header vs two physical legs |
+| Count Adjustment | approve/post | recount, correction |
+| Imported historical doc | import/validate/accepted canonical transition OR exclude history | external_system+external_document_id+revision→canonical occurrence mapping, reimport dedup |
+
+Billing alone determines eligible type/transition, base credits, volume threshold and measurement, discounts, tariff version, cancel/refund rule, temporal attribution and payer account. No unapproved trigger declared. Source emits nonmonetary committed candidate facts; no Sales rating. Offline device_occurred, server accepted, rated and posted dates are distinct; month attribution AR-009 OPEN. Approved: actual Seat+Usage expenses may go minus **one calendar month**, no forecast cap; 1 credit=10 UZS.
+
+### 12.5 Party/Customer/Outlet/Payer (AR-008)
+| Identifier | Authority / meaning | Prohibited equivalence |
+|---|---|---|
+| party_id | Canonical legal/natural identity; **CRM versus shared Party writer OPEN** | party not automatically customer or payer |
+| customer_role_id | CRM customer relationship | not legal invoice debtor by default |
+| outlet_id | CRM physical trade point/delivery place | not legal debtor/payer |
+| payer_party_id | payment remitter role; mapping OPEN CRM/Finance | not necessarily debtor |
+| debtor_party_id / receivable owner | **Finance authoritative AR obligation and invoice debtor snapshot** referencing Party | payment remitter cannot silently transfer obligation |
+| supplier_role_id | Purchasing references canonical supplier Party role | not a cloned Party master |
+| billing_account_id / SaaS payer | Billing separate SaaS liability | not ERP debtor |
+
+Sales records scoped customer/outlet references; Finance binds legal debtor at invoice posting, immutable debtor snapshot; merge/alias effective-dated history required. External payer/outlet IDs map through Integration, not direct ID equality.
+
+### 12.6 Open decision packets (MR-08)
+| Packet | Alternatives (none approved) | Required decision |
+|---|---|---|
+| Negative stock | prohibit vs permissioned warehouse/SKU exception | Sales/Inventory/Finance/user |
+| Reservation TTL | manual release vs configurable fixed TTL/renewal vs priority-aware TTL; allocation at confirm vs pick | Sales/Inventory/Mobile/UX/user |
+| Inventory valuation | FIFO vs moving weighted average vs lot-specific; costing writer/GL timing | Finance/Inventory/user |
+| Count cutoff | bin/warehouse freeze vs count snapshot + movement reconciliation | Database/Inventory/user |
+| Partial delivery | one order with multiple dispatch postings vs atomic complete shipment; partial invoice/reversal | Sales/Inventory/Finance/Billing/user |
+| Catalog & Party | tenant/global/overlay; CRM Party vs shared Party master | CRM/Backend/Finance/user |
+| Billing lifecycle | type, transition, cancel, return, imported history, amendment/volume, late period | Billing/Integrations/user |
+
+### 12.7 UX-T01…T20 acceptance alignment (UX §16)
+| UX task | Operational acceptance, not UI implementation |
+|---|---|
+| UX-T01 | New Sale draft/confirm/dispatch clearly distinct; stale price blocks unsafe confirm |
+| UX-T02 | Search/read sales order in authorized tenant/branch only |
+| UX-T03 | Cancel/return uses guarded status and reference to original dispatch, no silent deletion |
+| UX-T04 | Goods receipt inspection not counted as posted; rejection/quarantine visible |
+| UX-T05 | Transfer source→transit→destination, partial receive and cross-tenant denial |
+| UX-T06 | Count discrepancy and approved cutoff visible; no silent adjustment |
+| UX-T07 | Low-stock alert includes SKU/branch and stale-data warning |
+| UX-T08 | CRM customer/outlet picker: outlet is not legal debtor |
+| UX-T09 | CRM visit not an Inventory stock writer |
+| UX-T10 | Offline draft/queued/accepted statuses differ; server idempotency and reauthorization |
+| UX-T11 | Delivery photo/proof does not trigger second StockMovement |
+| UX-T12–T15 | Finance payment, AP, reconciliation, reports remain Finance-owned |
+| UX-T16 | Cross-branch KPI only with explicit authorization |
+| UX-T17 | Sales exception recovery rechecks revoked permissions, preserves audit |
+| UX-T18 | Role grant/change remains Security/tenant ownership |
+| UX-T19–T20 | SaaS charges/top-ups are Billing-owned; posted versus pending visible |
+
+UX numerical targets remain unmeasured PROPOSED; desktop/mobile errors localized uz/en/ru and future alphabet hidden. Show actual server status, no optimistic success claims.
+
+### 12.8 Round 2 decision record and central registry proposals
+[ADR-SI-014](../adr/ADR-SI-014.md) and [ADR-SI-015](../adr/ADR-SI-015.md) add Round 2-specific provenance, cross-domain boundaries and acceptance. Existing ADR-SI-011/012/013 remain PROPOSED, not superseded. Central DECISIONS, REQUIREMENTS, MODULE_REGISTRY, OPEN_QUESTIONS and CHANGELOG should link new packets and mark AR-002/005/008/010 as **OPEN pending signatures**; these files were not modified. Codex: **no code until technical/domain/business approvals**.
