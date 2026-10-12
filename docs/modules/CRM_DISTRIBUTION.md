@@ -147,3 +147,113 @@ No code now. After explicit approvals Codex should deliver:
 **Contract examples (PROPOSED):** `PartyLinkedToCustomer`, `OutletAssignedToAgent` and `ExternalCounterpartyMapped` events include tenant scope, immutable IDs, event version, idempotency key and source time. Finance creates its own ledger postings; CRM does not update AR/AP balances. Every authorized search or merge operation enforces tenant/company/branch grants.
 
 **Approval gate:** domain owners 00/04/05/06/07/12 must agree on one canonical Party and Catalog owner and versioned interfaces; user must approve any business consequence. AR-002 and AR-008 remain **OPEN**, AR-011's terminology is reconciled here as **PROPOSED**.
+
+
+## 12. ROUND 2 CORRECTION — AR-002 / AR-008 / AR-011; MR-09 / MR-13 (2026-10-12)
+
+**Status: PROPOSED; architectural reconciliation only.** §§1–11 historical material remains intact. This section specifies a single-writer recommendation, not an approved policy. Source cross-check: Round 2 review; Sales §11; Backend §17–18; Finance Accounting identity/settlement; Integration AR-008/011; UX §16; Mobile offline. Where preceding text assumes CRM owns Counterparty, that assumption is **superseded as PROPOSED**, pending owner selection; no old approval was changed.
+
+### 12.1 Canonical identity and role distinctions
+
+| Concept | Precise meaning | Proposed record/reference | Authoritative write candidate | Must NOT imply |
+|---|---|---|---|---|
+| Party | Canonical tenant-scoped person/organization identity; stable `party_id` | `PartyIdentity` + legal identity versions + aliases | shared logical Party context **recommended**, CRM-owned alternative OPEN | Legal debtor, SaaS subscriber, payer or global cross-tenant identity |
+| Counterparty | Business relationship/role of Party toward a legal entity/company; may buy/supply/settle | `CounterpartyRelation(party_id,company_id,role,effective_from/to)` | Party relationship writer candidate (shared) vs CRM-owned; OPEN | Necessarily same as Customer or AR debtor |
+| Customer | CRM-managed selling relationship, status/segment/coverage | `CustomerRelationship(party_id,company_id?,branch_scope?)` | **CRM** for customer relationship only | Ownership of legal identity or GL |
+| Supplier | Purchasing counterpart role | `SupplierRelationship(party_id,legal_entity_id)` | Purchasing (role only) | CRM customer status |
+| Outlet / SalesOutlet | Physical/virtual commercial service/visit/delivery location, optionally operated by another Party | `Outlet(outlet_id,customer_relation_id,operator_party_id?,delivery_address_id?)` | **CRM / Distribution** | Legal debtor or Payer; company Branch is a different tenant organization object |
+| Payer | Party **actually remitting** settlement; link to obligation and remittance, can be third party | `PayerInstruction/PaymentRemitter(payer_party_id,invoice_id,authorization_ref)` | **Finance** for ERP settlement; **Billing** for SaaS subscription obligation | Invoice legal debtor, credit liability or SaaS wallet holder |
+| ReceivableOwner | Legal debtor obligated on posted invoice/open item, legal entity and snapshot immutable | `ARObligation(debtor_party_id,legal_entity_id,invoice_id,legal_snapshot)` | **Finance** alone | Outlet/customer label or payment sender |
+| External ID | Provider-specific opaque ID, not canonical `party_id` | `ExternalIdentityMap` | **Integration** adapter mapping authority | Authorization or identity proof |
+
+**Concrete distinction:** one Party may be Customer to company A, Supplier to company B, operate 3 outlets, pay another party's invoice with authorization, while a separate debtor remains `ReceivableOwner`. Company's customer relation and branch/outlet assignment do not grant cross-company or cross-tenant data access. Tenant/company/legal entity/branch/BillingAccount IDs are distinct from Party identity.
+
+### 12.2 Party writer decision packet (OPEN — AR-008, MR-09)
+
+| Option | Single authoritative writer | Benefits | Costs / failure modes | Status |
+|---|---|---|---|---|
+| A — Shared logical Party context **RECOMMENDED** | PartyIdentity service *within* modular monolith initially, one write API and event source; no requirement for independent microservice | Consistent CRM/Purchasing/Finance legal identity references; role-neutral merge and audit | New bounded context, arbitration between legal entities, complex scoped search | PROPOSED / user approval OPEN |
+| B — CRM-owned Party master | CRM Party writer exclusively; Finance and Purchasing consume versioned contracts | Fewer initial modules, simpler onboarding | CRM becomes cross-business identity authority; high coupling and privilege concentration | PROPOSED alternative / user approval OPEN |
+| C — Independent masters with reconciliation | Separate CRM/Finance/Purchasing writers | Local autonomy | Ambiguous identity, broken dedup and debtor mapping; **not recommended** | Alternative, not APPROVED |
+
+**Invariant (PROPOSED):** whatever choice, exactly one authoritative `PartyIdentity` writer per tenant scope; consumers hold references + immutable legal snapshots, never independently mutate master. Shared logical Party is a design boundary, not automatic deployment approval. Legal ownership of Party, cross-company visibility and tenant migration semantics remain **OPEN**.
+
+### 12.3 Identity lifecycle, matching, merge/split and evidence — PROPOSED
+
+| Operation | Preconditions and authority | Effects / safeguards | OPEN decision |
+|---|---|---|---|
+| Create | Verified tenant + company context; permission, normalized legal name/IDs where applicable; candidate search | Mint immutable ID; possible duplicates flagged; `created_from` trace; no public global directory | Mandatory legal ID / verification by jurisdiction |
+| Match | Scoped exact identifier match; normalized phone/name/address fuzzy suggestions are **candidates only** | `POSSIBLE_DUPLICATE` not automatic join; evidence/provenance and confidence source recorded; no false legal assertions | Auto-match thresholds, human reviewer role |
+| Merge | Review of legal identity, role history, invoice obligations, account access and source evidence; two-record revision lock; authorized reviewer | Surviving `party_id`, immutable alias `superseded_party_id → surviving_party_id`, audit/reason; external maps re-resolved; no deletion of original invoices/AR legal debtor snapshots | Legal-entity or cross-company merge permission, reversibility window |
+| Split / mistaken merge | Explicit privileged correction workflow; separate newly minted identity and scoped affected references | Append `PartySplit` correction lineage, replay/reconcile only non-posted references where safe; Finance reallocation only via Finance-controlled compensating process | Who may reclassify posted docs and what evidence suffices |
+| Cross-company relationship | Same Party can have independent company-scoped customer/supplier/credit roles | Distinct agreements, taxes, AR and visibility checks; links never imply data sharing | Which legal entities may reuse Party master within tenant |
+| Cross-tenant duplicate | Search and compare only inside authorized tenant boundary | No implicit cross-tenant match/merge, inference via search counts or shared evidence | Enterprise isolation/migration special process |
+| External mapping | unique `(tenant_id,provider,connection_id,external_entity_type,external_id)` + optional company scope, canonical ID and mapping version | Append correction/audit, 1:N alias history, quarantine one external ID → conflicting canonical IDs; detect duplicate import by source occurrence | External ID reuse and cutover backfill strategy |
+
+Legal identity is versioned with `jurisdiction`, `identifier_type`, `identifier_value` protected appropriately, source, `verified_at` and `verification_method`; an integration import or matching score is **not** legal verification. Preserve original issuer/recipient/debtor/tax identification on Finance posted documents even after Party merge. Exports and global search require row-level tenant/company authorization and redaction.
+
+**Contract proposal:** `PartyCreated.v1`, `PartyIdentityCorrected.v1`, `PartyMerged.v1`, `PartySplit.v1`, `CustomerRelationshipChanged.v1`, `OutletAssignmentChanged.v1`, `ExternalPartyMapped.v1`. Envelope: `event_id`, `business_occurrence_id` (distinct), `schema_version`, `tenant_id`, `company_id?`, `party_id`, `aggregate_version`, `occurred_at`, `committed_at`, `correlation_id`, `payload_digest`. Local writer transaction + outbox, consumer inbox/dedup and same-key/different-payload conflict review; no distributed ACID assumption. Finance authoritative debtor snapshots stay unchanged.
+
+### 12.4 Strict Catalog/Pricing/Inventory boundary — AR-002
+
+| Master/fact | Single logical writer **PROPOSED** | CRM access |
+|---|---|---|
+| Category, Product, SKU/variant, UoM, conversions | Catalog (logical context; 05 container vs standalone OPEN) | Read-only catalog reference; CRM may own outlet-specific assortment relationships but not SKU |
+| PriceList, pricing rules, resolved quote | Pricing | Display versioned quote/snapshot returned through Pricing/Sales; no CRM price authoring |
+| SalesOrder/commercial confirmation | Sales | Creates request with customer/outlet/agent/visit IDs and idempotency key; displays authoritative server result |
+| Stock reservation, StockMovement, inventory valuation | Inventory | Scoped availability projection only; no CRM stock decrement |
+| Supplier PurchaseOrder | Purchasing | Supplier role reference only |
+| ERP GL, AR, payer allocations, credit notes | Finance | Read authorized projections; no ledger changes |
+| SaaS seat/usage charge, wallet | Billing | Emits candidate usage facts only; no rate/credit computation |
+
+No phrase “Sales owns products/inventory/prices” should be interpreted as one aggregate writer. Catalog namespace and Product-vs-SKU identity remain OPEN in Sales/Backend.
+
+### 12.5 SalesDoc evidence boundary — AR-011
+
+| Evidence label | What it actually proves | Required metadata | Forbidden interpretation |
+|---|---|---|---|
+| `DOCUMENTED` | Public provider documentation describes schema/behavior at source revision | URL/source title, accessed date, relevant document revision/quote, applicable endpoint/version | Not a successful API execution |
+| `LIVE_VERIFIED` | Specific authenticated endpoint exercised in a named environment with result | Env (sandbox/production), URL/path, test time, request/response sanitization, status/result, verifier, scope | Not verification of all API versions/accounts |
+| `INFERRED` | Analyst assumption based on indirect evidence | Rationale/source and uncertainty | Not a provider guarantee |
+| `UNVERIFIED` | Evidence missing, stale, unauthorized or untested | Blocker and verification owner | Not deployable as proven integration |
+
+**Current CRM claim:** no SalesDoc endpoint, production authentication, scope, quota or behavior has been live-verified in this correction. `ExternalIdentityMap` is a proposed contract, not evidence of live sync. Integration is evidence and adapter owner; CRM owns business role meanings. Imported external documents have source IDs and history; Sales/Billing decide any billable occurrence under their OPEN lifecycle policies, not CRM.
+
+### 12.6 Field-worker GPS, visit and photo privacy decision packet — MR-13
+
+| Topic | Options considered | Recommendation (PROPOSED) | OPEN/legal gate |
+|---|---|---|---|
+| Legal basis/consent | Explicit opt-in; other jurisdiction-authorized employment/business basis with clear notice; strict refusal of collection | Determine lawful basis per country; explicit transparent notice and scope; do **not** assume consent always sufficient or required | Legal/privacy review, withdrawal handling, local labor law |
+| Tracking window | Check-in/out only; approved on-duty intervals; continuous background | Check-in/out purpose-bound by default; no off-duty or silent background tracking | Need for route monitoring, worker representation |
+| Accuracy/geofence | Strict threshold/block; confidence band + review; manual location-free exception | Capture accuracy and source; low accuracy/spoof/out-of-geofence → review, not automatic fraud verdict | Numeric tolerance, fallback approver |
+| Photos/media | Mandatory every visit; exception-based photo; optional capture | Purpose/category scoped minimal capture, no default mandatory human-face photography; private access, checksum, EXIF minimization | Which visit/delivery types require evidence and consent |
+| Retention | Fixed global TTL; purpose/regional schedule; indefinite | Purpose+jurisdiction retention schedule; separate GPS/media/audit retention | Exact durations, legal holds, data-residency scope |
+| Erasure | Immediate purge all; scoped delete/anonymize; legal hold exception | Subject request intake, erase/anonymize when lawful, audit minimally, preserve restricted legal holds and posted Finance evidence as required | Controller roles, appeal/export SLA, legal exceptions |
+| Mobile offline | Local plaintext; encrypted queue with bounded TTL | Encrypt cache, require device/user authorization on replay, cleanup after ack under approved retention; no promise of immediate offline remote wipe | Offline TTL, revoked-device pending evidence processing |
+
+**Minimal evidence fields:** `evidence_id`, `visit_id`, `tenant/company/branch`, `purpose`, `captured_at_device`, `received_at_server`, `accuracy_m?`, `source`, `integrity_status`, `consent_or_legal_basis_ref?`, `retention_policy_version`, `media_object_ref?`, `access_audit`. Never fabricate missing GPS; separate `NOT_COLLECTED`, `PERMISSION_DENIED`, `LOW_ACCURACY`, `SUSPECTED_SPOOF`, `VERIFIED`. Do not place raw coordinates or biometric content in shared events, KPI exports or observability logs.
+
+### 12.7 UX-T01…T20 and Mobile alignment (MR-13)
+
+UX's twenty-task quality gate is **PROPOSED, not tested**. CRM owns the following workflow segments; other UX tasks remain with their listed owners.
+
+| UX task | Role/action path | CRM and other owner boundary | Mobile/offline/error acceptance (PROPOSED) |
+|---|---|---|---|
+| UX-T01 | Seller: Today → new sale → customer/outlet → items → review | CRM resolves authorized customer/outlet; Catalog resolves SKU; Pricing/Sales resolves price and submits order | Clear draft vs server-accepted; stale price blocks final; duplicate request same operation no duplicate order |
+| UX-T02 | Seller: global search → order | CRM exposes scoped party/outlet labels; Sales owns order search | No unauthorized party/order hit, count, cached recent or deep-link leak |
+| UX-T08 | Seller: search or create customer/outlet | Party proposed canonical lookup; CRM relationship/outlet create; duplicate candidate is review item | Scoped search, duplicate warning with no disclosure; offline provisional ID mapped on sync; rejects revoked rights |
+| UX-T09 | Field agent: Today → route → outlet → check-in → visit → check-out | CRM owns route/visit/evidence, Mobile owns queue; Security rechecks context | Show GPS unavailable/accuracy/review; pending ≠ verified; stale route or scope → conflict; no fabricated GPS |
+| UX-T10 | Field agent: visit → order draft → sync queue | CRM context IDs; Sales owns order acceptance; Mobile owns offline queue | `operation_id`, `base_version`, `client_created_at`; server reprices/validates stock; no offline GL/stock/Billing charge |
+| UX-T11 | Expediter: manifest → delivery → POD/photo/signature | Distribution assignment, Sales/Inventory physical reconciliation, Mobile media upload | Pending upload distinguished from accepted delivery; checksum and retry; one POD occurrence; missing media remains pending |
+| UX-T12/T15 | Accountant: customer AR/financial report | CRM label only, Finance owns debtor/AR and snapshot | Payer is not automatically debtor; authorized scope + snapshot as-of timestamp |
+| UX-T16…T20 | UX/admin/other roles per UX canonical matrix | CRM participates only for permitted party/outlet links and role-filtered search | No assumption of ownership of unrelated tasks; locale/accessibility and context quality gate applies |
+
+**Mobile contract:** scoped cache `tenant > company > branch > user > assignment > device`; atomic local command+queue; stable `operation_id`, versioned payload, device/source time plus server receipt; bounded encrypted storage; retry/backoff, cursor tombstones, reauthorization and visible accepted/rejected/conflict states. Rejected rights cannot be overridden by local role claims. Offline visit/order is never an authoritative Sales confirmation, Stock posting, Finance posting or SaaS Billing charge.
+
+**Testing specification, not executed:** wrong-tenant search denied including result counts; party merge under open invoice preserves Finance legal snapshot; cross-company assignment blocked without grant; duplicate external mapping quarantined; ID replay same/different payload; stale offline visit review; revoked device reject; GPS missing/low accuracy displayed distinctly; orphan photo uploads cleaned under defined policy; UX-T01/08/09/10/11 with uz/en/ru and keyboard/mobile accessibility. Numeric usability/performance targets from UX §16 remain PROPOSED/unmeasured.
+
+### 12.8 Approval and sync packet (NOT APPLIED)
+
+**OPEN user choices:** Party shared vs CRM writer; Party identity legal fields and merge/split reviewer; cross-company reuse; external ID reassignment; Outlet↔Customer/Party cardinality; employer/worker lawful GPS basis and consent, geofence tolerance, retention/erasure/exception; mandatory photo scenarios; route/visit verification; UX task acceptance thresholds; SalesDoc live API proof. Coordinate with Finance (AR debtor), Integration (ID/evidence), Sales/Backend (Catalog, Pricing, Inventory), Security/Mobile (authorization/offline) and UX (T01–T20).
+
+Central `DECISIONS.md`, `MASTER_ARCHITECTURE.md`, `REQUIREMENTS.md`, `MODULE_REGISTRY.md`, `OPEN_QUESTIONS.md`, `CHANGELOG.md` require **separately proposed** changes after approval; not modified here. No code; no production tests claimed.
