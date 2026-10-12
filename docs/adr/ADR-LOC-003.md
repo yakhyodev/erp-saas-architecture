@@ -25,3 +25,8 @@ Database and scaling, CRM, Inventory, Sales, Mobile Offline, Security, Multi-Ten
 
 ## Approval boundary
 Search normalization details and search engine choice are PROPOSED, not APPROVED. Benchmark and mapping review remain required.
+
+## Round 2 proposed collision, index and authorization contract — MR-17
+Derive separate NFC/casefold/whitespace, context-aware Uzbek apostrophe and reviewed Latin/Cyrillic aliases while preserving originals. Keep `normalizer_version`, `mapping_version`, `index_schema_version`, source revision and alias provenance; never normalize identifier equality or financial value. Russian/English tokenization does not inherit Uzbek transliteration indiscriminately. **OPEN collision policy variants**: conservative omit ambiguous alias; return distinct ranked authorized candidates; curator-maintained exceptions. Interim proposed default: exact identifiers/original names first, distinct candidates not silent merges, ambiguous aliases held for review.
+
+All surfaces require backend-side authorization over tenant/company/branch/resource: results, counts, autocomplete, facets, query history, saved search, local/CDN cache and index/reindex workers. Re-authorize read at query/detail and fail closed for stale grant/tenant switch; permission cache version contract belongs to Security/Backend (AR-013). Rebuild index in tenant-scoped shadow generation, replay changes, test collisions/no-leaks, switch generation pointer and allow rollback. Test unauthorized counts, suggestion inference, stale index, permission revoke, tenant A/B and cross-branch scope. **No tests run; search engine/freshness SLO OPEN.** ADR remains PROPOSED.
