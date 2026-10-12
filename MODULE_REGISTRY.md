@@ -80,3 +80,37 @@ Infra/DB supports all; HA/RLS and production verification remain OPEN
 ```
 
 **MVP scope OPEN (MR-18):** HR, Manufacturing, Purchasing, Reporting each require explicit include/exclude, ownership and milestone decision. See [Round 2](docs/reviews/ARCHITECTURE_REVIEW_ROUND_2.md), [OPEN_QUESTIONS](OPEN_QUESTIONS.md).
+
+
+## v0.3 — Current-main authoritative writer/dependency matrix (all candidates unless APPROVED business invariant)
+
+Source: [current-main sync baseline](https://github.com/yakhyodev/erp-saas-architecture/commit/f26d4587dcad20f4bf7e8404e27cdcaeace9a355). This table is the **current coordination proposal** and supersedes older overly broad “Security owns membership” descriptions **as proposal wording only**. One writer per entity is a design constraint; no candidate writer has been unilaterally approved.
+
+| Entity / business fact | Proposed authoritative writer | Readers / dependent domains | Alternative, conflict or status |
+|---|---|---|---|
+| Tenant, Company, Branch, org scope | Multi-Tenant | Security, Billing, ERP domains | Tenant/Company/LegalEntity mapping OPEN AR-001 |
+| LegalEntity relationship | Multi-Tenant organization reference + Finance legal accounting view | Finance, Billing, Sales | Single identity/relationship master and liability snapshot boundary OPEN |
+| BillingAccount, Wallet, subscription charge, usage rating | SaaS Billing | Tenant, Security seat input, Sales/Mobile usage source | Company 1:1 account 1:1 wallet **SELECTED_PENDING_APPROVAL**, enterprise shared payer OPEN |
+| Global User / IdentityAuth / Credentials / sessions | Security Identity domain | Multi-Tenant membership, Backend, Mobile | Exact service packaging and auth policy PROPOSED |
+| TenantMembership state and version | Multi-Tenant **recommended candidate** | Security, Backend, Billing seat attribution | Security umbrella wording alternative OPEN AR-013; never dual writer |
+| RoleAssignment and PolicyDefinition | Security/Permissions candidate | Backend enforcement, Tenant scope | Multi-Tenant-owned grants vs split administration alternative OPEN |
+| PermissionEvaluation / operation enforcement | Security policy evaluator; Backend & domain guard enforces | All entrypoints, search, offline, reports | Cache/version/revoke freshness OPEN MR-11 |
+| Catalog/Product/SKU/UoM | Logical Catalog owner | Sales, Pricing, Inventory, Purchasing, CRM/Integration | Tenant/global namespace and container OPEN AR-002; no Sales all-domain master |
+| PriceList / commercial Pricing | Logical Pricing owner | Sales and CRM consumers, Finance snapshots | Independent Pricing vs Sales-contained module OPEN; SaaS Billing tariff is separate |
+| SalesOrder / sales document lifecycle | Sales | Inventory, Finance, Billing events, CRM | Chargeable transition / partials / returns OPEN AR-010 |
+| StockReservation / StockMovement / StockBalance | Inventory | Sales, Purchasing, Finance GL effect | Dispatch leg once; valuation / count / negative stock policy OPEN |
+| PurchaseOrder / purchase intent | Purchasing logical owner (if in MVP) | Inventory receipt, Finance AP, Catalog | MVP inclusion/exclusion OPEN MR-18 |
+| Canonical Party / Counterparty | CRM-owned Party vs shared Party context **both proposed** | CRM, Sales, Finance, Integration | Canonical writer/merge/aliases OPEN AR-008 |
+| Customer relationship, Outlet, territory and visit | CRM/Distribution | Sales, Mobile, UX | Outlet ≠ legal debtor/payer; Party cardinality OPEN |
+| LegalDebtor / ReceivableOwner / AR obligation / ERP GL | Finance | CRM Party, Sales, Inventory | Legal snapshot & tax recognition OPEN; FIN-001 provenance UNVERIFIED |
+| Payment remitter / third-party payer source | Finance records ERP payment settlement, Party master resolves identity | CRM, Finance | Third-party payer authorization and cross-company allocation OPEN |
+| SaaS payer / wallet funder identity mapping | Billing (references verified Party/legal entity) | MT, Finance organizational mapping | Payer ≠ ERP debtor, actual liability mapping OPEN AR-001/008 |
+| External IDs (CS_id, SD_id, code_1C), provider evidence | Integrations adapter mapping registry | Domain authoritative import gateways | External IDs never canonical Product/Party/document/wallet identity; LIVE_VERIFIED missing |
+| Offline outbox / local operation state | Mobile; Backend owns server accepted command/result | Security, Sales, Billing, CRM | Server reauthorizes; delayed billing month OPEN |
+| Translation keys, locales, fallback/aliases | Localization | Web, Mobile, Search, UX | Hidden alphabet OFF; normalization never mutates IDs/amounts |
+| Reporting projections / global search | Domain-authorized read models; search index owner TBD | Finance, Inventory, CRM, UX, Security | MVP Reporting decision OPEN; permission-sensitive counts/facets tests NOT RUN |
+| Audit/observability, deployment/HA | Platform/Infrastructure, owner-of-source business facts | All | Initial HA/SLO, DR and test evidence OPEN |
+
+**Dependency contracts:** Sales commercial confirm ≠ stock movement ≠ Finance GL post ≠ SaaS charge. Database §18 selects owner-specific ACID+outbox as **preferred PROPOSED**, with older §6 one-transaction option retained as historical non-selected proposal; Finance accounting triggers remain OPEN. Integration is adapter, not Product/Party/GL/Wallet writer. Backend cannot bypass current membership and grants. Source of reconciliation: [Sales ADR-SI-014](docs/adr/ADR-SI-014.md), [ADR-SI-015](docs/adr/ADR-SI-015.md), [Finance FIN-003](docs/adr/FIN-003.md), [Billing §21](docs/modules/BILLING_ARCHITECTURE.md), [DB §18](docs/modules/DATABASE_ARCHITECTURE.md), [MT §20](docs/modules/MULTI_TENANT_ARCHITECTURE.md), [Security §21](docs/modules/SECURITY_ARCHITECTURE.md).
+
+**MVP OPEN:** HR / Manufacturing / Purchasing / Reporting. No scope selection implied.
