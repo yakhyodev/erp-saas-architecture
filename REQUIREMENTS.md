@@ -59,3 +59,22 @@ Do not treat any numerical price, volume breakpoint, SLA, RPO/RTO, role definiti
 - **AR-007:** beshta root registries GitHub main'da **EXISTS / FIXED_DOCUMENTATION**; sinxronizatsiya va provenance work davom etadi.
 - **MR-18:** HR, Manufacturing, Purchasing, Reporting — har birining MVP inclusion/exclusion **OPEN QUESTION**; arxitektura xaritasida modul tilga olinishi MVP ga kiritish qarori emas.
 - **Readiness:** Round 2 auditor verdict **BLOCKED**, 12 BLOCKED / 2 READY_WITH_CONDITIONS / 0 READY; yangi approval va bajarilgan test da'vosi yo'q. [Round 2 audit](docs/reviews/ARCHITECTURE_REVIEW_ROUND_2.md).
+
+
+## v0.3 — Current-main module alignment and acceptance gaps (2026-10-12)
+
+Current source: [current-main sync baseline](https://github.com/yakhyodev/erp-saas-architecture/commit/f26d4587dcad20f4bf7e8404e27cdcaeace9a355); older AR-006/AR-007 “missing” enumerations above are historical and superseded by the Round 2 v0.2 corrections. **APPROVED BIZ-001…010 remains unchanged.** Documented workflows and test plans are not acceptance results.
+
+| Area | Documented PROPOSED requirement | Still OPEN / test gate |
+|---|---|---|
+| Tenant/Billing | Actual Seat + Business/Resource Usage only, no forecast credit cap; immutable source attribution and independent Billing ledger | Company/account/wallet, legally liable payer, anniversary calendar-month edge policy, seat daily proration, tier precedence |
+| Domain data | Separate Catalog/Product/SKU, Pricing, Sales, Inventory, Purchasing, CRM/Party and Finance owner contracts | Canonical Catalog namespace, Party writer, GL/stock/accounting and Billing charge transitions |
+| Event integrity | Owner-local transaction+outbox and scoped business_occurrence_id dedup preferred | Final approval, reconciliation test and lifecycle recognition |
+| Identity & Security | Server authorization on all entrypoints; no frontend-only auth; tenant isolation and permission-safe search | Authoritative membership/grant writer, revoke freshness, RLS/pooling and negative test evidence |
+| Mobile | Secure scoped cache, stable offline operation and server-side replay authorization | TTL, device policy, offline usage period, conflict and deletion policy |
+| Integrations | Evidence categories DOCUMENTED/LIVE_VERIFIED/INFERRED/UNVERIFIED, source-specific SalesDoc V2 compatibility appendix | API/sandbox live verification, migration reconciliation, signed cutover |
+| UX | Mandatory platform-wide usability, task-first workflows, uz/en/ru; hidden future alphabet remains OFF | Pilot and user-approved UX-T01…T20 priorities, a11y/device/network targets, execution evidence |
+| Operations | Stage A recoverability ≠ HA; Stage B standby/fencing candidate, Stage C later | Initial stage, backup retention, region, RPO/RTO/SLO and measured load/DR tests |
+| MVP | HR, Manufacturing, Purchasing and Reporting are candidate domains | Per-domain include/exclude, phase and ownership business decision |
+
+Do not treat Billing §21's `SELECTED_PENDING_APPROVAL` choices as pricing or contract approvals. No implementation/release readiness asserted.
