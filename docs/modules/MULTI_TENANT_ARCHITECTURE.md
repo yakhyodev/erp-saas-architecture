@@ -268,3 +268,32 @@ Stage P (candidate): pooled shared schema + composite tenant FK and defense-in-d
 - No central registry updates in this Round 2 patch; no old approved business rule is changed.
 
 See [ADR-MT-001](../adr/ADR-MT-001.md) and [ADR-MT-002](../adr/ADR-MT-002.md) for decision alternatives and risks.
+
+
+## 20. Round 2 live-source alignment delta (2026-10-12; PROPOSED, OPEN)
+
+This is an incremental reconciliation against **Billing §20**, **Backend §18**, **Database §18**, **Security §17–19**, and **MODULE_REGISTRY Round 2 v0.2**, read on current `main`. It updates source crosswalk only; previous §19 cardinality comparison and MT-NEG-01..14 remain the canonical proposed matrix. Nothing below is a new APPROVED choice or a claim of executed tests.
+
+### 20.1 Current owner proposals versus still-open contradictions
+
+| Fact / operation | Current candidate writer | Reader / enforcer | Unresolved contradiction |
+|---|---|---|---|
+| Global credentials, MFA, session/device validity | Identity/Auth (Security identity domain) | Backend authenticates; Multi-Tenant references user_id only | Authentication package and device/session policy OPEN |
+| Tenant/Company/Branch affiliation | Multi-Tenant | Billing source attribution, Security scope, Backend guard | Company↔LegalEntity mapping authority and change history shared with Finance OPEN |
+| TenantMembership canonical state/version | **Multi-Tenant recommended candidate** | Security evaluation, Billing seat input, Backend authoritative recheck | MODULE_REGISTRY original Security membership umbrella and Billing old IAM wording still exist; latest registry v0.2 explicitly reports conflict; no single writer APPROVED |
+| RoleAssignment/grants and PermissionEvaluation | Security/Permissions candidate writer/evaluator | Backend/domain owns operation enforcement and object relationship | Registry Round 2 mentions alternative Multi-Tenant grant owner or split administrative API; a split UI/API does not justify dual mutable grant owners |
+| SaaS BillingAccount, Wallet, payer/debtor liability ledger | Billing | Multi-Tenant validates source organization; Finance maps LegalEntity | Wallet/account cardinality, legal debtor, paying actor, payer authorization and consolidation all OPEN |
+
+Latest **Billing §20.1** distinguishes `payer_party_id` (funding actor) from `legal_debtor_entity_id` (liability), with `payer_authorization_id?` and immutable `mapping_version`. Do not conflate either with tenant_id or assume branch billing actor = legal debtor. Earlier Billing §3 one-wallet-per-company wording is superseded in interpretation by Billing §19/§20 **as a PROPOSED candidate only**, not a new approved status. The latest Round 2 registry **documents** (does not resolve) the earlier Security-membership conflict. The old primary module §15/§19 statements continue to be proposals.
+
+### 20.2 Integration clarifications to Billing §20 / Backend §18 (PROPOSED)
+
+- Source organization validation: immutable `tenant_id`; `source_company_id?`, `source_branch_id?`, checked against company/branch affiliation at effective time; `membership_id?` and `membership_version?` tie actor to the real authorized context. For global Seat or shared Resource Usage, company/branch may be null instead of guessed.
+- Separate timestamps: source `occurred_at`, server `committed_at`, ingestion `received_at`; Billing alone chooses charge-effective month (AR-009/MR-02 OPEN). If backdated or reassigned company, preserve effective-dated source and Billing payer mapping snapshots. Multi-Tenant does not choose calendar-month grace policy.
+- Billing resolves `billing_account_id`, `wallet_id`, `payer_party_id?`, `legal_debtor_entity_id?`, `payer_authorization_id?`, `mapping_version` — never accept untrusted submitted wallet IDs as routing authority. Ambiguous mapping → pending/rejected (per Billing policy), not implicit pooled balance.
+- Backend §18 distinguishes **event_id** (delivery envelope) from **business_occurrence_id** (same semantic operation). Earlier §15 `UsageFactRecorded.v1` must be supplemented with `business_occurrence_id` and `aggregate_revision?`; replay with a fresh event_id but identical business_occurrence_id cannot generate a second economic debit. Producer emits facts from committed owner transaction/outbox; Billing owns pricing, rating, posting and deduplication.
+- Membership event proposed `MembershipChanged.v1`: tenant_id, membership_id, user_id, old/new state, monotonic membership_version, effective_at, committed_at, transition_id, changed company/branch scopes if valid. Billing determines Seat eligibility and prorating; a revoked permission need not automatically change commercial license billing unless separately approved.
+
+**Additional acceptance refinement:** extend existing MT-NEG-13 with payer_party ≠ legal_debtor, third-party funder authorization, effective-dated company transfer and split-accrual replay; extend MT-NEG-11 with two event IDs sharing one business_occurrence_id across placement cutover, expecting one Billing economic posting. These are **test designs not run**. Billing §§20.2–20.5 calendar-month, seat status, document trigger and closed-month treatment remain OPEN.
+
+**Approval gate:** user + Billing + Finance confirm payer/debtor/Wallet cardinality and shared-seat allocation; Security + Multi-Tenant + Backend + Master confirm single writer and revocation boundary; Database + Security + Infrastructure approve selected shared-schema/RLS or dedicated placement/restore strategy. No implementation authorization or changes to central registries.
