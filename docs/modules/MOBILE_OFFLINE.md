@@ -29,3 +29,29 @@ See [ADR-MOB-004](../adr/ADR-MOB-004.md) and [ADR-MOB-009](../adr/ADR-MOB-009.md
 ## AR-009 — delayed usage month attribution (OPEN QUESTION)
 
 Preserve `client_occurred_at` (untrusted), `server_received_at`, `server_accepted_at`, trusted chargeable lifecycle time when defined, and final `rated_calendar_month`. Possible billing attribution: occurrence month with auditable corrections; server acceptance/chargeable transition month; server receipt month with correction policy. **None approved.** Billing and Sales must settle charge trigger (AR-010), timezone, month closing, late events, duplicate/replay, reversal and adjustment rules. Mobile does not rate usage or change approved one-calendar-month negative balance policy.
+
+## Round 2 operational contract — AR-006 / AR-009 / MR-12 / MR-13 (PROPOSED)
+
+**Existing ADRs:** [ADR-MOB-004](../adr/ADR-MOB-004.md) and [ADR-MOB-009](../adr/ADR-MOB-009.md) exist; their earlier “missing” description is stale historical tracking.
+
+### Two independent state machines
+
+- **Outbox command:** `DRAFT → QUEUED → SENDING → ACCEPTED | REJECTED | CONFLICT | UNKNOWN | RETRYABLE`. UNKNOWN = timeout/ack lost, not rejection or acceptance; query/retry same operation_id. RETRYABLE → QUEUED with backoff. CONFLICT → NEEDS_REVIEW; corrected semantic intent uses new operation_id and original reference. REJECTED is terminal unless a new authorized command is created. ACCEPTED confirms only command acceptance, not asynchronous dispatch/GL/Billing.
+- **Delta cursor:** `READY → PULLING → APPLYING → READY` or `RESYNC_REQUIRED → RESYNCING → READY`. Scope mismatch/cursor expiry forces reseed; local pending/unknown intents are never silently deleted. Data+tombstones+cursor commit atomically.
+- **Economic effect:** domain owner separately reports PENDING/COMPLETED/FAILED; mobile does not infer stock or charge from outbox ACK.
+
+### Authorization and local protection
+
+On every server replay: authenticate principal/session/device; independently resolve tenant, company, branch, membership, active role/permission, assignment and target resource. Reject revoked device/permission, never replay across tenants. Encrypted DB/media and OS-backed keys; offline revoke cannot guarantee instant wipe. Quarantine vs encrypted retention vs cryptographic deletion remain Security-owned OPEN options, including >30-day offline and device theft.
+
+### Event clocks and Billing alignment
+
+`client_occurred_at` untrusted; `server_received_at`, `server_accepted_at`, authoritative `occurred_at`, `billed_at` and `rated_calendar_month` are distinct. Occurrence-month / acceptance-month / receipt-month alternatives remain OPEN with Billing. Timezone, month close, reversals and negative-month anchor cannot be selected by Mobile. Deduplicate domain business occurrence before any Billing rating; no local wallet mutation.
+
+### Offline UX
+
+Pending, syncing, unknown, retryable, conflict, failed, completed and downstream effect pending must be distinguishable by text/icon (not color only), with accessible reason and recovery. Customer/visit/order/delivery/GPS/media evidence retains separate server status and scoped permission checks.
+
+### Test scenarios
+
+Network before/after commit; crash during outbox and delta; permission revoked; stolen device; expired token; 30+ day offline (test case **not approved TTL**); cross-tenant/company/branch switch; duplicate order/dispatch/payment/charge; GPS/media interruption; month boundary delayed event. Expected: no silent loss, no unauthorized replay, no duplicate economic effect, no false completed state.
