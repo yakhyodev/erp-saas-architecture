@@ -182,3 +182,18 @@ Status transitions require user approval, record of evidence, superseding ADR (i
 **Candidate selections recorded by Billing §21 — all PROPOSED / user selected for review, not approved:** (1) Company 1:1 BillingAccount 1:1 Wallet; (2) anniversary-based **calendar** month (not 30 days); (3) activated Seat + day proration; (4) server-approved business-effective month, closed-period linked current-open adjustment; (5) marginal progressive discount bands. Legal payer, dates, cutoff, charges, stacking, reconciliation and other policy details OPEN. Approved no-estimated-limit/actual-only negative balance invariant unchanged.
 
 AR/MR current owner/status matrix: [OPEN_QUESTIONS v0.3](OPEN_QUESTIONS.md); canonical proposed writer map: [MODULE_REGISTRY v0.3](MODULE_REGISTRY.md). Codex readiness: **NOT REASSESSED**; prior Round 2 BLOCKED is historical audit verdict, not an independent new readiness finding.
+
+---
+
+## v0.4 — 2026-10-12 explicit user-approved MVP billing scope
+
+**Provenance:** Direct user selections in this project's 2026-10-12 conversation (Company billing, LegalEntity, SaaS debtor vs third-party funder, Company-scoped Seat, one responsible Company for Tenant-shared Resource Usage); user subsequently delegated recommended operational design continuation. Source: [ADR-BILL-011](docs/adr/ADR-BILL-011.md). **ADR index delta:** new `ADR-BILL-011` (owner Billing), overall `PROPOSED`, with explicitly `APPROVED_BY_USER` business subdecisions and `OPEN` technical edges. Repository now has **101 ADR**; the previous 100-ADR v0.3 index is historical, not current. Original FIN-001 APPROVED label remains provenance-UNVERIFIED and unchanged.
+
+| ID | Scoped user-approved decision | Status |
+|---|---|---|
+| BIZ-011 | MVP each Company has a distinct LegalEntity, BillingAccount and Wallet (1:1:1:1), no Branch wallet | APPROVED_BY_USER |
+| BIZ-012 | Company's LegalEntity legally liable for SaaS debt; authorized third-party Wallet funding does not transfer debt | APPROVED_BY_USER |
+| BIZ-013 | One Seat per user per Company, no added Seat for Branch/device; same user in different Companies separately counted | APPROVED_BY_USER |
+| BIZ-014 | True measured Tenant-shared Resource Usage charged to one predesignated responsible Company; Company/Branch scoped usage to its own Company | APPROVED_BY_USER |
+
+**Not approved here:** same-person/two-role approval policy, exact metering boundary/timezone, resource units/prices/free tiers, seat activation/proration, chargeable document triggers, late sync/month rules, tax/refunds or technical stack. Recommended two-step responsibility acceptance, future-only assignment and immutable ledger are `PROPOSED`, not proof of implementation.

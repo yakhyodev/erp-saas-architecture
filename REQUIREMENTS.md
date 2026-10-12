@@ -78,3 +78,9 @@ Current source: [current-main sync baseline](https://github.com/yakhyodev/erp-sa
 | MVP | HR, Manufacturing, Purchasing and Reporting are candidate domains | Per-domain include/exclude, phase and ownership business decision |
 
 Do not treat Billing §21's `SELECTED_PENDING_APPROVAL` choices as pricing or contract approvals. No implementation/release readiness asserted.
+
+---
+
+## v0.4 — MVP Company-scoped SaaS Billing requirements (2026-10-12)
+
+**APPROVED_BY_USER:** [ADR-BILL-011](docs/adr/ADR-BILL-011.md) `BIZ-011` Company:LegalEntity:BillingAccount:Wallet 1:1:1:1 (Branch no Wallet); `BIZ-012` Company LegalEntity liable for SaaS fees despite authorized third-party Wallet top-up; `BIZ-013` per-user/per-Company Seat with branch/device dedup and independent different-Company Seats; `BIZ-014` Tenant-shared measured Resource Usage attributed to one predefined responsible Company and ordinary Company/Branch resources to their own Company. User approval source 2026-10-12 direct project conversation; [DECISIONS v0.4](DECISIONS.md). `MR-01` partially resolved cardinality/liability, `MR-03` scope resolved but billing status/proration/rates OPEN; `MR-04` categories/rates/measurement still OPEN. Proposed workflow acceptance: verified two-role responsibility acceptance, effective-dated immutable attribution, pending unresolved meter evidence, no fallback arbitrary Wallet or cross-company debt transfer. Runtime tests NOT EXECUTED.
