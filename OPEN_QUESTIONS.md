@@ -227,3 +227,16 @@ Status vocabulary follows the Round 2 audit: `SPECIFIED_PROPOSED` = contract dra
 **P1**: Catalog global/tenant scope and Pricing container, Party owner/merge/legal payer mapping, Seat day proration details, discount tier window and enterprise precedence, HA Stage A/B and RPO/RTO/backup region/budget, Search permission leakage tests, SalesDoc documented-versus-live evidence and cutover, UX-T01…20 priority/a11y performance pilot, HR/Manufacturing/Purchasing/Reporting MVP scope, GPS privacy/offline retention. No numerical defaults are approved.
 
 **Audit readiness:** Round 2 previously reported BLOCKED; this registry update is **not** a new independent Codex readiness review.
+
+---
+
+## v0.4 — Partial resolution of AR-001/MR-01/03/04 from direct user decisions (2026-10-12)
+
+[ADR-BILL-011](docs/adr/ADR-BILL-011.md) documents **APPROVED_BY_USER** MVP Company→distinct LegalEntity→BillingAccount→Wallet 1:1:1:1 (no Branch Wallet), SaaS liability at the Company's LegalEntity, authorized third-party top-up without debt transfer, per-user/per-Company Seat (no Branch/device duplicates) and one designated responsible Company for Tenant-shared true Resource Usage.
+
+- **AR-001 / MR-01 = PARTIALLY_RESOLVED:** MVP account cardinality and debt holder approved; precise legal identity verification, funder authorization/refund, enterprise consolidation and legal migration require separate sign-off.
+- **MR-03 = PARTIALLY_RESOLVED:** per-Company seat count approved; active/suspend/revoke time, activated daily-prorating effective period, price, rounding still OPEN.
+- **MR-04 = PARTIALLY_RESOLVED:** responsible-company source attribution approved; resource classes/units/metering window/rates, chargeable document eligibility/threshold/refunds remain OPEN.
+- **Operational PROPOSED:** Tenant admin proposes; recipient Company's authorized finance representative accepts; mapping future effective, immutable historical liability; no automated cross-wallet transfer or arbitrary wallet fallback. Exact approval role delegation, next metering cutoff/timezone, pending attribution, closed-month correction, chargeback remain OPEN.
+
+Earlier AR-001/MR-01 open wording is **historical for the particular now-approved scope**, not wholly deleted. All other AR/MR and FIN-001 provenance are untouched; Round 3 review snapshot still valid historically; tests not run.

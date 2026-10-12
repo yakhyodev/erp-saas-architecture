@@ -43,3 +43,12 @@ Resolve AR-001..013 with domain owners and explicit user sign-off, then update r
 - Linked restored SalesDoc V2 provider compatibility appendix: documentary evidence is not live API verification.
 - AR-006/007 documentation exists, while Mobile/Security and governance sign-off are still OPEN. UX usability invariant maintained; MVP HR/Manufacturing/Purchasing/Reporting OPEN.
 - Historical audits and other chat modules/ADRs intentionally not modified. Codex readiness not reassessed; no code written.
+
+---
+
+## 2026-10-12 — v0.4 user-approved MVP Company-scoped Billing and shared Resource Usage
+
+- Added [ADR-BILL-011](docs/adr/ADR-BILL-011.md), the 101st ADR, with overall PROPOSED status and separated APPROVED_BY_USER business subset from operational/technical OPEN decisions.
+- User explicitly approved individual Company LegalEntity/BillingAccount/Wallet (1:1:1:1), that LegalEntity as SaaS debtor, third-party authorized funding without liability transfer, Seat once per user per Company (no Branch/device duplication), and one predesignated responsible Company for Tenant-shared measured Resource Usage.
+- Appended scope-limited synchronization notes to Billing, Multi-Tenant, Finance and Master modules, plus DECISIONS, REQUIREMENTS, MODULE_REGISTRY and OPEN_QUESTIONS; previous proposal alternatives remain historical.
+- Two-step shared assignment, prospective change, immutable historical charges, pending attribution and dual-role permission tests are proposed defaults; exact financial cutoffs, price, tax, refund, Seat cycle and technical ADR approval remain OPEN. No code, runtime test, false readiness or old audit rewrite.

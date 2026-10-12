@@ -114,3 +114,18 @@ Source: [current-main sync baseline](https://github.com/yakhyodev/erp-saas-archi
 **Dependency contracts:** Sales commercial confirm ≠ stock movement ≠ Finance GL post ≠ SaaS charge. Database §18 selects owner-specific ACID+outbox as **preferred PROPOSED**, with older §6 one-transaction option retained as historical non-selected proposal; Finance accounting triggers remain OPEN. Integration is adapter, not Product/Party/GL/Wallet writer. Backend cannot bypass current membership and grants. Source of reconciliation: [Sales ADR-SI-014](docs/adr/ADR-SI-014.md), [ADR-SI-015](docs/adr/ADR-SI-015.md), [Finance FIN-003](docs/adr/FIN-003.md), [Billing §21](docs/modules/BILLING_ARCHITECTURE.md), [DB §18](docs/modules/DATABASE_ARCHITECTURE.md), [MT §20](docs/modules/MULTI_TENANT_ARCHITECTURE.md), [Security §21](docs/modules/SECURITY_ARCHITECTURE.md).
 
 **MVP OPEN:** HR / Manufacturing / Purchasing / Reporting. No scope selection implied.
+
+---
+
+## v0.4 — User-approved MVP Billing cardinality and proposed authority (2026-10-12)
+
+| Business object | Candidate writer/validator | User decision vs technical status |
+|---|---|---|
+| Company/Branch/LegalEntity organizational link | Multi-Tenant; Finance validates legal evidence | **APPROVED_BY_USER:** Company has distinct LegalEntity, Branch no separate wallet; registration contracts PROPOSED |
+| BillingAccount and Wallet/immutable SaaS ledger | Billing | **APPROVED_BY_USER:** one distinct BillingAccount + Wallet per MVP Company; ledger mechanism PROPOSED |
+| SaaS legal liability and third-party funder | Billing contract snapshots and payment evidence; Finance legal verification | **APPROVED_BY_USER:** Company LegalEntity remains debtor even with authorized third-party top-up; verification/refund policy OPEN |
+| Billable Seat economic identity | Billing, consuming authoritative membership state | **APPROVED_BY_USER:** user × Company, no Branch/device duplicate; state/proration OPEN |
+| Shared Resource Usage responsibility assignment | Billing financial writer; Multi-Tenant validates Company; Security enforces permissions | **APPROVED_BY_USER:** one designated Company bears Tenant-shared measured usage; assignment dual-role workflow PROPOSED |
+| Metered usage event | Source resource owner; Billing rates and charges | Company/Branch usage to source Company APPROVED_BY_USER; API and metering units PROPOSED |
+
+[ADR-BILL-011](docs/adr/ADR-BILL-011.md) is the canonical scope/provenance. SaaS wallet writer is never ERP Finance, while FIN-003 Party writer choice remains OPEN. Older v0.3 company-cardinality uncertainty is historical for the new MVP scope. No change to identity/membership technical ADR sign-off or Codex readiness.
