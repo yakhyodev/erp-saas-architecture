@@ -60,3 +60,13 @@ Resolve AR-001..013 with domain owners and explicit user sign-off, then update r
 - Added [ADR-BILL-012](docs/adr/ADR-BILL-012.md) (102nd ADR) describing candidate activated Seat lifecycle, calendar-day proration variants, unique economic occurrence per user×Company/day, event-version ordering and linked reversals.
 - Existing ADR-BILL-011 explicit user-approved per-Company Seat scope preserved; activation/suspend/day cutoff/pricing/refund **not automatically approved**.
 - Reconciled Billing, ADR-BILL-010 and Multi-Tenant plus central decision, requirements, registry, open questions and Master architecture documentation. Original audit snapshots retained; no product code/tests/prices invented.
+
+---
+
+## 2026-10-12 — v0.6 delegated MVP architecture selection and controlled Codex handoff
+
+- On the user's express delegated decision-making instruction, documented coherent **official PROPOSED / DESIGN_SELECTED_UNDER_DELEGATION** choices without inventing regulator, rates, expiry terms, provider API evidence or test results. No change to explicit APPROVED user economic invariants or ADR-BILL-011 direct approval subset.
+- Added [ADR-BILL-013](docs/adr/ADR-BILL-013.md) (negative anniversary-clamp/no cap), [ADR-BILL-014](docs/adr/ADR-BILL-014.md) (configured final-document base, marginal tiers), [ADR-010](docs/adr/ADR-010-mvp-delegated-baseline.md) (modular monolith, owners, isolation, MVP scope). ADR inventory now **105** total; preexisting FIN-001 historical provenance still unresolved.
+- Created [CODEX_START_HERE](docs/handoff/CODEX_START_HERE.md), [MVP_IMPLEMENTATION_BACKLOG](docs/handoff/MVP_IMPLEMENTATION_BACKLOG.md) and [REMAINING_GATES](docs/handoff/REMAINING_GATES.md), separating staging, external input, approval and tests.
+- Coordinated amendments to Master, Billing, Multi-Tenant, Database, Backend, Sales/Inventory, Finance, CRM, Security, Mobile, UX, Infra, Integrations and Localization module documents, plus central registries. Previous alternative proposals and all Round 1/2/3 reports retained.
+- Handoff architecture prepared, **not CODEX_PRODUCT_CODE_READY**, NOT_TESTED security/DR/performance/usability, no regulatory claims, zero product code/migrations/deployments.

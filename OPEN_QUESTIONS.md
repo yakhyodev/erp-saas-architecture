@@ -246,3 +246,24 @@ Earlier AR-001/MR-01 open wording is **historical for the particular now-approve
 ## v0.5 — MR-03 Seat charging subdecisions and ADR-BILL-012 (2026-10-12)
 
 Existing user-approved **Seat scope**: one user×Company, no branch/device duplication, independently billable across Companies ([ADR-BILL-011](docs/adr/ADR-BILL-011.md)). New [ADR-BILL-012](docs/adr/ADR-BILL-012.md) describes candidate ACTIVE start, invited/pending excluded, local calendar-day prorating, versioned membership events, canonical company-scoped charge dedup and append-only corrections. **No new commercial approval**; technical alternatives stay PROPOSED. **MR-03 = PARTIALLY_RESOLVED**: unresolved (1) activated day counted vs next day vs hourly (2) SUSPENDED reserved-paid vs paused (3) remove/transfer cutoff and same-day multiple company handling (4) local timezone/month window and billing cadence (5) daily fraction and rounding (6) exact Seat amount, enterprise discounts and any refunds (7) out-of-order/backdated correction and MR-02 negative grace interaction (8) final membership writer Security/MT sign-off AR-013. Do not claim Codex ready or executed tests.
+
+---
+
+## v0.6 — delegated design choices vs genuinely remaining external/evidence gates (2026-10-12)
+
+**Review note:** Previous AR/MR `OPEN` descriptions are historical and may be **DESIGN_SELECTED_UNDER_DELEGATION**, but this is not the same as independently approved monetary/legal policy, technical owner sign-off, or executed tests. See [all 20 MR current status + closure owners](docs/handoff/REMAINING_GATES.md), [ADR-010](docs/adr/ADR-010-mvp-delegated-baseline.md), [BILL-013](docs/adr/ADR-BILL-013.md), [BILL-014](docs/adr/ADR-BILL-014.md).
+
+- **AR-001/MR-01:** user-approved Company LegalEntity/BillingAccount/Wallet/Seat/sharing; payer authorization and legally compliant billing records E.
+- **AR-002/MR-09:** Catalog dedicated and Party shared writer selected candidate; owner technical sign-off and legal counterparty checks S/E.
+- **AR-003/MR-14/15:** internal Stage A non-HA and later B selected; business region/RPO/RTO/SLO and measured restore/performances E/T.
+- **AR-004:** FIN-001 historical label has no independently evidenced original user approval; remains OPEN_PROVENANCE; do not rewrite past.
+- **AR-005/MR-06/07/08:** source domain owner-local outbox selected, GL legal/accounting profile, stock valuation/negative/reversal and concurrency approvals E/S/T.
+- **AR-006/009/MR-02/12/13:** offline revocation and latency rules selected; negative anniversary-clamp candidate, privacy/expiry/retention legal choices E/S, actual tests T.
+- **AR-007:** new ADRs and current delta index created; historical files and old audit preserved; governance ongoing.
+- **AR-010/MR-03/04/05:** per-user-per-Company Seat directly approved; activated-day candidate, document final-transition/marginal-tier defaults selected, but actual price/rate/threshold/tax/refund and rearm/expiry E.
+- **AR-011/MR-19:** source-specific SalesDoc appendix DOCUMENTED only; production verification E/T.
+- **AR-012/MR-16/17/20:** UX acceptance contract and launch task scope selected, user pilot/baseline/a11y tests T and real customer target E.
+- **AR-013/MR-11:** Multi-Tenant membership, Security grants, Backend guard preferred; privileged DB/RLS/pool/caches/search cross-tenant negative tests and tech sign-off S/T.
+- **MR-18:** MVP core Sales/Inventory/Purchasing/CRM/Billing/authorized core Finance, Mobile, UX + basic reporting selected; full HR/payroll/Manufacturing/advanced BI deferred by proposed roadmap.
+
+**Remaining critical E/S/T gates:** contract fiscal jurisdiction, company legal/payer evidence, effective price books/discount tiers, provider settlement and refund rules, negative expiry terms, inventory valuation and GL tax point, placement/RLS authorization, backup restoration, quantitative SLO cost, mobile GPS lawful purpose and retention, SalesDoc live test and genuine UX pilot. No code writes were authorized by preparing [Codex start](docs/handoff/CODEX_START_HERE.md). **Do not mark AR/MR as TEST_PASSED or READY on a documentation basis**.

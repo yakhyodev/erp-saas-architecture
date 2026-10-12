@@ -203,3 +203,19 @@ AR/MR current owner/status matrix: [OPEN_QUESTIONS v0.3](OPEN_QUESTIONS.md); can
 ## v0.5 — ADR-BILL-012 Seat lifecycle proposal and existing Seat scope approval (2026-10-12)
 
 New [ADR-BILL-012](docs/adr/ADR-BILL-012.md) appended: **102 ADR files total**; `ADR-BILL-012` overall `PROPOSED`. Existing [ADR-BILL-011](docs/adr/ADR-BILL-011.md) user **APPROVED_BY_USER** Seat *scope* only: canonical user × Company, branch/device no duplicate, different Company additional Seat. ADR-BILL-012 is a detailed **PROPOSED** eligibility/proration/event/charge contract. **Not automatically approved**: ACTIVE activation date, billable INVITED/SUSPENDED/REMOVED status, calendar-day inclusion, any price, rounding, seat charging cycle, pro-rata/refund and transfer economic cutoff. FIN-001 historical APPROVED label still has UNVERIFIED provenance. The old v0.3 per-ADR index is historical; this delta indexes the new ADR without changing existing statuses.
+
+---
+
+## v0.6 — 2026-10-12 delegated MVP design selection; 105-ADR registry delta
+
+**User provenance:** Direct user-selected `BIZ-011…014` remain explicitly APPROVED_BY_USER ([ADR-BILL-011](docs/adr/ADR-BILL-011.md)). Later request "O'zing barchasini yakunla. Codexga berishga tayyorlab tur... o'zing hal qil eng yaxshi usuldan bor" delegates architectural choice and documentation, not fabricated commercial rates, legal compliance, completion of tests or coding authorization. Therefore new choices use `PROPOSED` official ADR status with `DESIGN_SELECTED_UNDER_DELEGATION` scope marker. Original TECH-001…008 remain historical PROPOSED with explicit preferred candidate, no silent APPROVED promotion. **FIN-001 original APPROVED label and UNVERIFIED historical provenance remain unchanged.**
+
+| New ADR | Owner | Official ADR status | Candidate selected / provenance |
+|---|---|---|---|
+| [ADR-BILL-013](docs/adr/ADR-BILL-013.md) | Billing | PROPOSED | Anniversary one-calendar-month with end-of-month clamp, actual negative crossing, no forecast ceiling; delegated choice; renewal/expiry contract pending |
+| [ADR-BILL-014](docs/adr/ADR-BILL-014.md) | Billing | PROPOSED | Logical finalized chargeable SalesOrder/GoodsReceipt/StockTransfer (only if published price); historical imports excluded, marginal tiers; delegated choice, actual price/tax OPEN |
+| [ADR-010](docs/adr/ADR-010-mvp-delegated-baseline.md) | Master | PROPOSED | Go/PostgreSQL/Next.js/Flutter modular monolith, typed owner-local ACID/outbox, scoped Party/Catalog writers, staged infrastructure, core MVP modules; delegated design |
+| Previous [ADR-BILL-012](docs/adr/ADR-BILL-012.md) | Billing | PROPOSED | Membership/Seat timing candidate; `user × Company` economic scope already APPROVED_BY_USER |
+| Previous [ADR-BILL-011](docs/adr/ADR-BILL-011.md) | Billing | PROPOSED overall; approved business subset | Distinct Company LegalEntity/BillingAccount/Wallet, third-party funder/debtor, Company Seat, Tenant shared usage approved by direct user |
+
+**Current index total: 105 ADR files.** Earlier 100/101/102-ADR tables are historical snapshots, not current totals. Non-ADR handoff: [CODEX_START_HERE](docs/handoff/CODEX_START_HERE.md), [MVP_IMPLEMENTATION_BACKLOG](docs/handoff/MVP_IMPLEMENTATION_BACKLOG.md), [REMAINING_GATES](docs/handoff/REMAINING_GATES.md). No new statutory defaults, customer tariffs, numerical SLO or provider LIVE_VERIFIED is claimed. Architecture handoff prepared; code authorization not granted.

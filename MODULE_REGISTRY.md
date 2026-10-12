@@ -143,3 +143,27 @@ Source: [current-main sync baseline](https://github.com/yakhyodev/erp-saas-archi
 | Company LegalEntity/BillingAccount/Wallet liability | MT legal org reference + Billing contract ledger | User-approved MVP Company 1:1:1:1, detailed technical mapping PROPOSED |
 
 Source [ADR-BILL-012](docs/adr/ADR-BILL-012.md) and [ADR-BILL-011](docs/adr/ADR-BILL-011.md). Economic dedup should key by canonical user×Company, not number of membership/branch/device records. No change to FIN-001 provenance or original permission owner technical approval.
+
+---
+
+## v0.6 — delegated canonical MVP bounded-context owner registry (2026-10-12; official PROPOSED)
+
+| Canonical entity | Single preferred writer | Reader/enforcer and unresolved gate |
+|---|---|---|
+| Principal/Auth credentials/sessions | Identity component in Security/Auth | Global principal distinct from tenant; session/MFA tech policy OPEN |
+| Tenant/Company/Branch and TenantMembership | Multi-Tenant | Security consumes membership, Backend guards; single writer technical sign-off OPEN |
+| RoleAssignment/PolicyDefinition/PermissionEvaluation | Security/Permissions | Backend/domain rechecks; stale grant fail closed |
+| Canonical Party/Counterparty identity | Shared Party bounded context | CRM Customer/Outlet relationships; Finance legal debtor immutable snapshot; technical owner sign-off OPEN |
+| Product/SKU/UoM | Catalog | Pricing PriceList separate; Sales/Purchasing/Inventory/CRM only read |
+| PriceList/quote calculation | Pricing | Sales immutable snapshot, no CRM master pricing |
+| SalesOrder and commercial state | Sales | Inventory does not mutate physical stock on confirm |
+| StockMovement/StockBalance/reservation/valuation | Inventory | Dispatch once; invoice never second stock write |
+| PurchaseOrder/GoodsReceipt | Purchasing | Inventory accepted receipt once |
+| ERP GL, AR/AP, financial reports and legal posting | Finance | Not SaaS Wallet; profile/external legal approval OPEN |
+| SaaS BillingAccount/Wallet/Seat/Usage/charges/legal liability and tenant-shared responsibility | Billing | Separate Company legal debtor and 3rd-party funder BIZ-011…014 APPROVED_BY_USER; tariff/contract OPEN |
+| External IDs and provider mapping | Integrations | Canonical domain writers never externally owned; SalesDoc LIVE_VERIFIED absent |
+| Offline outbox | Mobile; accepted command Backend/domain | Must reauthorize when reconnecting, no offline GL/stock/Wallet posting |
+| Locale bundle/aliases | Localization | Web/Mobile/Search use authorized scope; hidden alphabet OFF |
+| Search/report projections | Read model owned by relevant domain | Authorized results/counts/facets/history/cache/reindex; technical test OPEN |
+
+[ADR-010](docs/adr/ADR-010-mvp-delegated-baseline.md) selects this as one consistent **PROPOSED** design under user delegation. [Handoff backlog](docs/handoff/MVP_IMPLEMENTATION_BACKLOG.md) sequences implementation stages. Do not override previously approved economic invariants or infer new regulator, customer fee or completed security test. Old v0.3/0.4/0.5 proposed tables remain historical; no dual writer permitted in subsequent signed scheme.
