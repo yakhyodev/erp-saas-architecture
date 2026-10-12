@@ -130,3 +130,9 @@ Capture `client_occurred_at` (untrusted), `server_received_at`, `server_accepted
 | Device storage full/media upload interrupted | keep command integrity, report recoverable failure, resume verified chunks | media quota |
 
 **Release evidence (not yet produced):** cross-device/tenant/branch isolation, restart recovery, permission revoke, same-key/different-payload, late event across month, duplicate stock/charge, offline 30+ day and UX-T workflow acceptance. No numeric offline lifetime is approved.
+
+---
+
+## Delegated MVP offline economic-boundary handoff (2026-10-12)
+
+[ADR-010](../adr/ADR-010-mvp-delegated-baseline.md) and [ADR-BILL-013](../adr/ADR-BILL-013.md) are `PROPOSED` handoff defaults: local Flutter encrypted outbox may stage domain commands with stable operation ID and `QUEUED/UNKNOWN/REJECTED/ACCEPTED` states, but cannot independently debit SaaS Wallet, post GL or mutate authoritative stock. Reconnect server checks current membership/device/tenant/company/branch grants. Late offline client time is nonauthoritative; server-domain effective usage and closed-month adjustment need financial signed period policy, immutable invoice history. Revoked offline device cannot guarantee instant remote wipe. Retention/quarantine, legal GPS basis and device TTL remain EXTERNAL/SECURITY POLICY gates. Do not mark NOT_TESTED runtime acceptance as passed. [Handoff](../handoff/REMAINING_GATES.md).

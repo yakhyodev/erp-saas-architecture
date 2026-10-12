@@ -454,3 +454,8 @@ Navigation = persistent active company/branch selector + Today + global search +
 
 **Release gate statuses:** G0 scope/role approval = OPEN; G1 authorization and cross-scope negative test = UNTESTED; G2 domain correctness and retry = UNTESTED; G3 mobile offline/revoke = UNTESTED; G4 language/a11y = UNTESTED; G5 pilot and performance evidence = UNTESTED. Audit Round 2’s “documentation fixed” is NOT closure of AR-012 or implementation approval. Global DECISIONS/OPEN_QUESTIONS/REQUIREMENTS/MASTER/CHANGELOG changes are suggested only; none made here.
 
+---
+
+## 18. Delegated MVP UX delivery priorities and verification scope (2026-10-12)
+
+[ADR-010](../adr/ADR-010-mvp-delegated-baseline.md) selects **PROPOSED** task-first role dashboards and phased UX-T01…UX-T20 acceptance fixtures for MVP. Prioritize sale/create/confirm/dispatch, receipt/transfer, Customer/Outlet, payment/AR, company Wallet/verified third-party funding and shared-resource responsibility. Always show source Company/Branch, responsible LegalEntity/Wallet, actual charge vs unpriced candidate, posting vs queued/UNKNOWN offline result; never label provisional Wallet effect as posted. Company switching must clear stale search/count/cache and any previously selected Wallet. Public uz/en/ru; hidden alphabet remains OFF. Better-than-Sales-Doctor is a user-APPROVED quality *goal*, not measured benchmark. Pilot tasks, accessibility WCAG candidate and actual test outcomes NOT RUN; see [MVP backlog](../handoff/MVP_IMPLEMENTATION_BACKLOG.md).

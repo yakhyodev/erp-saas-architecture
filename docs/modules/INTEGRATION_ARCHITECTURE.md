@@ -226,3 +226,9 @@ Owned ADRs **ADR-INT-001..005 remain PROPOSED**; proposals here refine their int
 - Prior paragraphs remain historical PROPOSED hypotheses, not new APPROVED decisions. Canonical details remain subject to Backend/Sales/CRM/Finance/Billing/Security agreement.
 
 **Shared-doc follow-up only (NOT EDITED):** Master/Decisions/Module Registry/Open Questions/Changelog owners should link this provider appendix and retain AR-008, AR-010, AR-011, MR-10 and MR-19 as OPEN until approvals and evidence. No code authorized.
+
+---
+
+## Delegated SalesDoc migration boundary for MVP (2026-10-12)
+
+[ADR-010](../adr/ADR-010-mvp-delegated-baseline.md) chooses **PROPOSED** read-first, disabled-by-default SalesDoc V2 adapter until authorized sandbox/live verification. Provider appendix retains `DOCUMENTED` API method/capability/mapping/error/rate-limit evidence, never `LIVE_VERIFIED` without executable credentialed test. Integration owns external ID mapping, never canonical Party/Product/Sales/Wallet writer. Historical imports excluded from automatic SaaS charge by [ADR-BILL-014](../adr/ADR-BILL-014.md), semantic source de-dup stable across retries. Outbound production sync/cutover/rollback only after legal API access, owner reconciliation and signed operational runbook; no unverified side effects.

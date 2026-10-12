@@ -201,3 +201,9 @@ Desktop browsers, mobile OS/device list, assistive technology combinations, acce
 **PROPOSED block release** on critical untranslated/error messages, mismatched typed placeholders, unsupported offline bundle contract, public hidden-alphabet exposure, unauthorized result/count/suggestion/facet/history, index cross-tenant leak, stale-grant bypass or transformed immutable identifier/amount. UX signs off task flows and keyboard/screen reader acceptance, Localization catalog and linguistics, Security/Backend authorization, Mobile offline integrity and Database reindex integrity; none is APPROVED or tested yet.
 
 **OPEN decision packet:** platform fallback/default locale; ambiguous alias collision policy; standalone Uzbek Cyrillic UI need; legal alphabet standard/start date; catalog runtime/ICU version; search freshness target and index owner; tenant enterprise locale override; quantitative UX/a11y/browser/device acceptance baselines. Central registry synchronization is for Master owner, **not applied in this chat**.
+
+---
+
+## 16. Delegated MVP locale, indexing and hidden alphabet handoff (2026-10-12)
+
+User APPROVED public UI languages are `uz/en/ru` with a private OFF-by-default future Uzbek alphabet option. [ADR-010](../adr/ADR-010-mvp-delegated-baseline.md) selects **PROPOSED** shared versioned translation key/error contract across Next.js/Flutter/offline, Unicode original text preserved and optional reversible search-only aliases. Alias/transliteration MUST NOT rewrite SKU, barcode, INN, document number, tenant/company/user ID, event ID or money/stock precision. Search results, counts, facets, recents, autocomplete/cache/reindex always tenant/branch authorization scoped; no new public locale by feature flag accident. UX locale/a11y and search-security matrix defined, not runtime tested. [Codex plan](../handoff/MVP_IMPLEMENTATION_BACKLOG.md).

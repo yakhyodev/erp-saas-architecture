@@ -263,3 +263,9 @@ Cloud vendor/region; data residency; peak concurrency and largest tenant; cost b
 6. **DR evidence packet:** dated scenario/test artifact, source backup IDs and WAL ranges, integrity results, elapsed recovery time and observed data loss, approvals, unresolved gaps and remediations; repeat after major schema/placement changes.
 
 **Cross-module gate:** Database owns recovery correctness, Backend owns retries/pooling, Security owns key and access controls, Multi-Tenant owns placement/tenant identity, Billing/Finance/Inventory own ledger/stock reconciliation. No global `DECISIONS.md` / `OPEN_QUESTIONS.md` edits here; propose links and OPEN packet synchronisation only. **Codex deployment remains BLOCKED for production until business decisions, test execution and approval; this is architecture-only specification.**
+
+---
+
+## 20. Delegated staged MVP infrastructure selection and launch blockers (2026-10-12)
+
+[ADR-010](../adr/ADR-010-mvp-delegated-baseline.md): **PROPOSED** internal/pilot Stage A = single primary Postgres + encrypted offsite backup, WAL/PITR, proven isolated restore; emphatically NOT HA. Before paid production with contractual uptime needs, choose Stage B primary/standby with fencing and tested failover when SLO/RPO/RTO demands; Stage C automation only on measurements. No blanket Kubernetes, Kafka, Redis, read replicas or sharding without resource/performance evidence. Dedicated enterprise placement optional. Region, provider, retention, numeric SLAs, cost budget, compliance requirements remain EXTERNAL_INPUT_REQUIRED; actual backup/failover/load tests NOT RUN. Codex staged operational acceptance in [backlog](../handoff/MVP_IMPLEMENTATION_BACKLOG.md). No fake production READY.

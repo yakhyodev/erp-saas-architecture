@@ -257,3 +257,9 @@ UX's twenty-task quality gate is **PROPOSED, not tested**. CRM owns the followin
 **OPEN user choices:** Party shared vs CRM writer; Party identity legal fields and merge/split reviewer; cross-company reuse; external ID reassignment; Outlet↔Customer/Party cardinality; employer/worker lawful GPS basis and consent, geofence tolerance, retention/erasure/exception; mandatory photo scenarios; route/visit verification; UX task acceptance thresholds; SalesDoc live API proof. Coordinate with Finance (AR debtor), Integration (ID/evidence), Sales/Backend (Catalog, Pricing, Inventory), Security/Mobile (authorization/offline) and UX (T01–T20).
 
 Central `DECISIONS.md`, `MASTER_ARCHITECTURE.md`, `REQUIREMENTS.md`, `MODULE_REGISTRY.md`, `OPEN_QUESTIONS.md`, `CHANGELOG.md` require **separately proposed** changes after approval; not modified here. No code; no production tests claimed.
+
+---
+
+## 13. Delegated Party master and MVP CRM boundary (2026-10-12)
+
+[ADR-010](../adr/ADR-010-mvp-delegated-baseline.md) selects **PROPOSED** single tenant-scoped *shared Party logical bounded context* (not CRM Sales/Product/GL/Wallet dual ownership). CRM owns Customer/Outlet/territory/visit/agent relationship and consumes canonical Party; Finance owns immutably snapshotted LegalDebtor/AR obligation; Integrations stores scoped CS_id/SD_id/code_1C external links only. SaaS Billing Company LegalEntity debt vs third-party funder from **user APPROVED** ADR-BILL-011 is distinct from customer payer/remitter in ERP Finance. Party merge/split is audited, cross-Company legal settlement requires law/authorization; GPS/media default disabled without lawful basis, retention and device policy. SalesDoc documented API is not LIVE_VERIFIED. Party ownership needs joint technical sign-off before schema writer. [Handoff](../handoff/REMAINING_GATES.md).

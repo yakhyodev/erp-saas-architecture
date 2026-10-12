@@ -429,3 +429,9 @@ A failed reservation/dispatch/invoice/GL/charge must not leave the source commit
 | MR-10 integration | Integration v0.3 documents external mappings and evidence taxonomy | External requests are treated as untrusted, normalized, versioned commands; source external ID is never owner identity or wallet ID | PROPOSED; evidence and migration decisions OPEN |
 
 **No additional business approval, production verification, or implementation permission.** Preserve earlier §18 command/event matrix, occurrence IDs, conflict policy, pagination/schema/error standards and fail-closed authorization. Central governance files and other module docs were not edited by Backend.
+
+---
+
+## 20. Delegated MVP owner-local integration and Codex contract (2026-10-12)
+
+[ADR-010](../adr/ADR-010-mvp-delegated-baseline.md) chooses **PROPOSED** Go modular monolith + versioned REST/OpenAPI contract, PostgreSQL owner-specific atomic transaction+outbox/inbox. Same economic occurrence with new transport event never causes new charge/GL/StockMovement; same-key/different-payload CONFLICT. Separate IdentityAuth in Security/Auth, TenantMembership writer Multi-Tenant, Role/Grant Security; backend guards *every* API/job/offline replay and cannot become independent writer for another domain. Party shared logical context and Catalog writer one each; Finance ERP GL and Billing SaaS Wallet distinct. External SalesDoc adapter read-first disabled until actual LIVE_VERIFIED, no automatic writes. Handoff staged plan [MVP backlog](../handoff/MVP_IMPLEMENTATION_BACKLOG.md); Go/runtime API, software testing and implementation permission not approved by document only.
