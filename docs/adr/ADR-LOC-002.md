@@ -25,3 +25,6 @@ Database, Sales, Inventory, CRM, Finance, Billing, Backend/API, UX, Audit, Integ
 
 ## Approval boundaries
 **APPROVED**: three interface languages, a hidden future Uzbek alphabet and existing ERP business rules. **PROPOSED**: the architectural data separation, catalog format and manually reviewed alternate-label workflow. Final acceptance requires explicit architecture approval.
+
+## Round 2 proposed catalog and identity contract — MR-20
+Keys use immutable module-scoped semantic names with catalog release, contract major, integrity digest, typed placeholders, plural/select tests and compatibility/deprecation windows. Web and mobile must share key semantics; offline pins last verified compatible release. Stable backend error codes and sanitized typed parameters are language-independent. UI/localized print templates never mutate original business records, issued snapshots, Product ID, SKU, barcode, document number, INN, tenant/company/branch IDs, financial amount/currency, domain event ID, business occurrence ID or offline operation ID. Translation/sanitization cannot authorize additional records. Catalog skew, critical missing translations, unsafe interpolation, offline fallback and locale-switch immutability are **design release gates, NOT TESTED**. Language registry and runtime/ICU implementation remain PROPOSED/OPEN; existing ADR status unchanged.
