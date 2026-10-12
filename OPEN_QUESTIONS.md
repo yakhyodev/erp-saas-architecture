@@ -175,3 +175,55 @@ Status vocabulary follows the Round 2 audit: `SPECIFIED_PROPOSED` = contract dra
 | Manufacturing | Not decided | Not decided | OPEN QUESTION |
 | Purchasing | Not decided | Not decided | OPEN QUESTION |
 | Reporting | Not decided | Not decided | OPEN QUESTION |
+
+
+## v0.3 — Current-main AR-001…013 and MR-01…20 delta ledger (2026-10-12)
+
+**Source:** [current-main sync baseline](https://github.com/yakhyodev/erp-saas-architecture/commit/f26d4587dcad20f4bf7e8404e27cdcaeace9a355); 01–13 Round 2 corrections. **Interpretation:** this current delta supersedes stale existence/conflict wording in historical tables above, not the audit document. `FIXED_DOCUMENTATION` ≠ user-approved; `SELECTED_PENDING_APPROVAL` ≠ APPROVED; `NOT_TESTED` ≠ failed or passed. No AR or MR business approval inferred.
+
+| AR | Updated status | Owner | New evidence / required next action |
+|---|---|---|---|
+| AR-001 | HARMONIZED_PROPOSED / SELECTED_PENDING_APPROVAL | 01 Billing + 02 MT + 06 Finance | Company 1:1 BillingAccount 1:1 Wallet selected candidate; legal debtor/payer and shared liability OPEN |
+| AR-002 | HARMONIZED_PROPOSED / OPEN | 04 Backend + 05 Sales + 07 CRM | Separate Catalog/Product/SKU and Pricing writers proposed; catalog namespace/container OPEN |
+| AR-003 | HARMONIZED_PROPOSED / OPEN / NOT_TESTED | 03 DB + 11 Infra | Stage A single-primary PITR NOT HA; B standby/fencing; C later automation; A/B, RPO/RTO OPEN |
+| AR-004 | MISSING_APPROVAL_PROVENANCE | 06 Finance + 00 Master | FIN-001 remains labelled APPROVED; original explicit approval evidence UNVERIFIED |
+| AR-005 | HARMONIZED_PROPOSED / APPROVAL_OPEN | 03 DB + 04 Backend + 05 Sales + 06 Finance | DB §18 explicitly classifies §6 cross-domain ACID as historical non-selected PROPOSED; owner-local ACID+outbox preferred PROPOSED, GL trigger OPEN |
+| AR-006 | FIXED_DOCUMENTATION / POLICY_OPEN | 09 Mobile + 10 Security | ADR-MOB-004/009 exist; offline TTL, revocation, device cleanup, conflict policy OPEN |
+| AR-007 | FIXED_DOCUMENTATION / GOVERNANCE_SYNC | 00 Master + 14 Audit | Five registries exist; status/provenance reconciliation continues; not new approval |
+| AR-008 | HARMONIZED_PROPOSED / OPEN | 07 CRM + 06 Finance + 12 Integrations | CRM Party writer vs shared Party context OPEN; Finance legal AR debtor, SaaS Billing payer distinct |
+| AR-009 | SELECTED_PENDING_APPROVAL / OPEN | 01 Billing + 09 Mobile + 04 Backend | Server-approved business-effective month with linked current-open-period adjustment selected; closed-month, negative grace impact OPEN |
+| AR-010 | HARMONIZED_PROPOSED / OPEN | 01 Billing + 05 Sales + 12 Integrations | Source lifecycle/occurrence and Billing charge separated; doc-type/transitions, refunds, partial/import OPEN |
+| AR-011 | FIXED_DOCUMENTATION / LIVE_NOT_VERIFIED | 12 Integrations + 07 CRM | SalesDoc provider evidence appendix restored; DOCUMENTED ≠ LIVE_VERIFIED; cutover OPEN |
+| AR-012 | FIXED_DOCUMENTATION / NOT_TESTED / OPEN | 08 UX + 09 Mobile + 13 Localization | UX-T01…T20 and a11y/search acceptance matrix documented, no measured pilot or approval |
+| AR-013 | HARMONIZED_PROPOSED / OWNER_OPEN | 10 Security + 02 MT + 04 Backend | Security Identity/Auth + RoleAssignment/PolicyEvaluation, MT TenantMembership candidate; competing ownership not approved |
+
+| MR | Current status | Owner | Decision type | Next action / cross-domain dependency |
+|---|---|---|---|---|
+| MR-01 | SELECTED_PENDING_APPROVAL | Billing+MT+Finance | BUSINESS | Company→BillingAccount→Wallet 1:1 candidate; debtor/payer mapping approval |
+| MR-02 | SELECTED_PENDING_APPROVAL | Billing | BUSINESS | Anniversary calendar month; clamp/roll-forward, timezone, top-up, expiry OPEN |
+| MR-03 | SELECTED_PENDING_APPROVAL | Billing+Security+MT | BUSINESS | Activated Seat + daily proration candidate; billing lifecycle OPEN |
+| MR-04 | SPECIFIED_PROPOSED / OPEN | Billing+Sales+Integration | BUSINESS | Eligible document/resource list, unit/rate and transition OPEN |
+| MR-05 | SELECTED_PENDING_APPROVAL | Billing | BUSINESS | Marginal progressive tiers candidate; tier window/stacking/contract precedence OPEN |
+| MR-06 | SPECIFIED_PROPOSED / OPEN | Finance | BUSINESS/LEGAL | Tax jurisdiction, GL recognition, currency and close policy OPEN |
+| MR-07 | HARMONIZED_PROPOSED / OPEN | DB+Backend+Sales+Finance | TECH + BUSINESS | Owner-local ACID/outbox favored, source/stock/GL triggers need sign-off |
+| MR-08 | SPECIFIED_PROPOSED / OPEN | Sales+Inventory+Finance | BUSINESS | Reservation TTL, negative stock, valuation, count cutoff OPEN |
+| MR-09 | SPECIFIED_PROPOSED / OPEN | CRM+Finance+Integration | OWNERSHIP/BUSINESS | Party writer/merge, ERP debtor, third-party payer OPEN |
+| MR-10 | SPECIFIED_PROPOSED / UNTESTED | Backend+Integrations | TECHNICAL | Versioned event/API, occurrence/dedup and external compatibility testing |
+| MR-11 | SPECIFIED_PROPOSED / NOT_TESTED | MT+DB+Security | TECH/SECURITY | Shared-schema/RLS/placement and negative tests OPEN |
+| MR-12 | DOCUMENTATION_FIXED / POLICY_OPEN | Mobile+Security+Backend | SECURITY | Mobile ADRs exist; offline TTL/revoke/cleanup and sync conflicts OPEN |
+| MR-13 | SPECIFIED_PROPOSED / OPEN | CRM+Mobile+Security | PRIVACY/BUSINESS | GPS lawful basis, geofence/retention/media/erasure OPEN |
+| MR-14 | HARMONIZED_PROPOSED / NOT_TESTED | Infra+DB | SLA/BUSINESS | Stage A/B, RPO/RTO, budget, recovery/failover testing OPEN |
+| MR-15 | SPECIFIED_PROPOSED / NOT_TESTED | Infra+DB | PERFORMANCE | Resource budgets, p95/p99 workload, concurrency and tests pending |
+| MR-16 | DOCUMENTATION_FIXED / NOT_TESTED | UX+domain owners | UX/BUSINESS | UX-T01…T20 approved priority and pilot evidence OPEN |
+| MR-17 | SPECIFIED_PROPOSED / NOT_TESTED | UX+Security+Localization | SECURITY/TECH | Search counts/facets/cache/revoke negative tests pending |
+| MR-18 | OPEN_BUSINESS | Master+domain owners | MVP SCOPE | HR/Manufacturing/Purchasing/Reporting include/exclude OPEN |
+| MR-19 | DOCUMENTATION_RESTORED / NOT_LIVE_VERIFIED | Integrations+Security | EXTERNAL EVIDENCE | SalesDoc V2 compatibility appendix documented, live testing/cutover OPEN |
+| MR-20 | SPECIFIED_PROPOSED / NOT_TESTED | UX+Mobile+Localization | UX/BUSINESS | Accessibility/device/locale/network targets and pilot approval OPEN |
+
+### User decision packet — priority proposal, NOT APPROVED
+
+**P0**: (1) Company→BillingAccount→Wallet candidate and legal debtor/payer allocation; (2) anniversary one-calendar-month anchor, date clamp, timezone, refill/expiry and late usage month; (3) chargeable document type × lifecycle transition × reversals, resource units, tier precedence; (4) GL revenue/COGS/AR recognition, stock reservation/valuation and owner-local transaction approvals; (5) IdentityAuth/TenantMembership/RoleAssignment single-writer ownership, isolation + revoked-device policy; (6) Finance jurisdiction/tax/functional currency. **No estimated credit ceiling** under any option.
+
+**P1**: Catalog global/tenant scope and Pricing container, Party owner/merge/legal payer mapping, Seat day proration details, discount tier window and enterprise precedence, HA Stage A/B and RPO/RTO/backup region/budget, Search permission leakage tests, SalesDoc documented-versus-live evidence and cutover, UX-T01…20 priority/a11y performance pilot, HR/Manufacturing/Purchasing/Reporting MVP scope, GPS privacy/offline retention. No numerical defaults are approved.
+
+**Audit readiness:** Round 2 previously reported BLOCKED; this registry update is **not** a new independent Codex readiness review.
