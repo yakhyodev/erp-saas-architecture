@@ -92,3 +92,60 @@ FIN-001: separate Finance/Billing ledgers (approved requirement). FIN-002: immut
 - **FIN-OPEN-ATOMICITY:** Finance posting synchronization and failure recovery.
 
 **References:** [Finance Architecture](FINANCE_ARCHITECTURE.md), [Sales & Inventory](SALES_INVENTORY.md), [CRM](CRM_DISTRIBUTION.md), [Billing](BILLING_ARCHITECTURE.md), [FIN-001](../adr/FIN-001.md), [FIN-002](../adr/FIN-002.md), and root `DECISIONS.md`/`OPEN_QUESTIONS.md`. No shared file is modified here.
+
+## Round 2 finance operating contracts — 2026-10-12 (PROPOSED; AR-001/004/005/008, MR-06/07/09)
+
+This addendum incorporates Round 2 findings; previous decisions and historical text are retained. **FIN-001 remains APPROVED as written, but its original explicit user approval evidence is AR-004 OPEN.**
+
+### Finance versus SaaS Billing reconciliation boundary
+
+| Economic book | Owns | Must not own |
+|---|---|---|
+| Tenant ERP Finance | GL, cash/bank, AR/AP, financial invoice, credit note, payment allocation, fiscal reconciliation | SaaS Wallet, credit issuance, seat/usage rating, negative SaaS grace |
+| SaaS Billing | BillingAccount, Wallet/credit ledger, top-up settlement, actual Seat/Business/Resource charge, SaaS invoice | Tenant ERP customer debtor GL, stock movement, AR/AP allocation |
+
+**Approved SaaS rules** stay untouched (Hybrid Prepaid, 1 credit=10 UZS, actual Seat/Usage one-calendar-month negative without estimated credit ceiling). AR-001 company/tenant payer and wallet cardinality is OPEN. No inferred equality of SaaS payer, ERP legal debtor, Customer or Outlet.
+
+### Posting & open-item reconciliation matrix (PROPOSED)
+
+| Fact | Finance action | Stock owner/effect | Open policy |
+|---|---|---|---|
+| Sales confirmation | No automatic GL/AR | Inventory reservation only, no on-hand reduction | Credit checks |
+| Dispatch | Optional cost/valuation journal once per canonical movement | Inventory physical debit once | COGS timing, FIFO/average |
+| Goods receipt | Optional inventory/GRNI accrual | Inventory physical credit once | Valuation, AP timing |
+| Sales invoice | Create AR open item and balanced journal when authorized | No stock effect | Revenue/tax recognition |
+| Purchase invoice | Create AP open item and balanced journal when authorized | No stock effect | GRNI/tax matching |
+| Settled payment | Bank/cash + allocated AR/AP settlement once | None | Third-party payer approval, advances |
+| Credit/debit note | Adjust original AR/AP via linked journal | None | Tax correction |
+| Customer/supplier return | Valuation reversal candidate after Inventory fact | Inventory movement once | Cost/tax/credit-note link |
+| Reversal | Compensating Finance journal referencing original | Inventory separately reverses its own movement | Period close / correction |
+
+### Ledger source, replay and audit
+
+Finance journal source uniqueness: `tenant_id + legal_entity_id + source_fact_id + journal_kind + policy_version`. Require immutable source reference, operation ID, event ID, payload digest, effective business date, posting date, original journal/reversal link, legal debtor/payer snapshot, actor and authorization. Same-key same-content returns prior result; same-key changed-content is a conflict. Posted journal, AR/AP open item and inbox outcome commit atomically with Finance outbox. Typed owner-specific events, at-least-once delivery and independent Billing rating; **owner-local ACID + outbox preferred PROPOSED**, not approved cross-domain ACID. Pending, late, missing and duplicate effects must appear in reconciliation exceptions; no silent backdated fixes.
+
+### Party and settlement lineage
+
+Party/Counterparty identity owner CRM vs shared Party OPEN. CRM Customer and Outlet are relationships/locations, not automatically legal debtor. Finance owns AR liability and snapshots legal debtor identity on invoice. Payment remitter may be third party; verify authority and allocate explicitly. Keep immutable payer/debtor/beneficiary snapshots and Party merge alias lineage. Historical invoice, journal and bank evidence must not be rewritten on CRM merge. Cross-company payment/settlement and legal entity books OPEN.
+
+### Recognition options requiring explicit approval
+
+- Revenue: invoice vs delivery/performance obligation; AR: invoice vs milestone.
+- COGS: dispatch vs revenue-matched; inventory cost: FIFO vs weighted average; goods receipt: GRNI accrual vs invoice matching.
+- AP: purchase invoice vs goods receipt accrual; tax point: invoice vs supply/payment as lawful.
+- Currency: functional currency by legal entity vs other legal scope, rate provider/date/rounding.
+- Period close: strict immutable close with next-period adjustment vs authorized reopen; local fiscal calendar and late corrections.
+- None is an APPROVED accounting policy or legal compliance claim.
+
+### Finance UX / recovery acceptance (aligned with UX-T12–T15, UX §16)
+
+| Task | Pass condition (test proposal, NOT EXECUTED) |
+|---|---|
+| Invoice | Draft and posted visually distinct; debtor/tax/currency/period review; timeout resolves by same operation ID without duplicate |
+| AR/AP allocation | Payer ≠ debtor supported with evidence; partial and unapplied funds visible; over-allocation rejected; settled ≠ initiated |
+| Reconciliation | Unmatched/duplicate/FX differences visible with source proof, reviewer action and audit; no silent write-off |
+| Period close | Preview open exceptions, explicit authorization, closed-period conflict and safe retry/reopen workflow |
+| Error recovery | Pending/unknown/conflict/posted state, correlation ID, retry-safe outcome; denied cross-tenant/branch access |
+| Accessibility/locales | uz/en/ru, keyboard/screen reader, desktop/mobile and revoked permission tests; UX numeric targets unmeasured |
+
+**Approval gates:** FIN-001 provenance; Party legal debtor/payer authority; revenue/COGS/AP/AR/tax/FX/valuation/period policy; transaction boundary; UX roles and acceptance. Codex product implementation remains BLOCKED. See [Finance Architecture](FINANCE_ARCHITECTURE.md), [FIN-002](../adr/FIN-002.md), [FIN-003](../adr/FIN-003.md), Sales, CRM, Billing, Database and UX module contracts.
