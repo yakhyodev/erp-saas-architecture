@@ -36,3 +36,18 @@ Identity/Security owns memberships and authorization, Multi-Tenant owns company/
 
 ## Approval gate
 MR-03/MR-05 remain OPEN: approved states, scope, charge cycle, effective date source, proration, discounts, rounding and price values required before code. No status promotion.
+
+## Round 2 correction — AR-013 / MR-03 (2026-10-12, PROPOSED ownership; OPEN approval)
+**Supersedes this ADR's earlier prose that “Identity/Security owns memberships” as a *proposal*, not as an approved decision.** Candidate authoritative writer chain: **Identity** owns global UserCredentials/authentication; **Multi-Tenant** writes TenantMembership, statuses and company/branch affiliations; **Security** writes RoleAssignment/Grant and evaluates permissions; **Billing** consumes versioned authoritative membership events and owns seat charge snapshots. [Security §17](../modules/SECURITY_ARCHITECTURE.md), [Multi-Tenant](../modules/MULTI_TENANT_ARCHITECTURE.md) align; root MODULE_REGISTRY still says Security owns membership, an explicit unresolved cross-module documentation conflict. Do NOT write membership from Billing or Security under this candidate; AR-013 still OPEN.
+
+| Transition | Billable candidate | Approval |
+|---|---|---|
+| invited | not billable vs seat reservation | OPEN |
+| activated | start immediate prorated vs full next cycle | OPEN |
+| suspended | pause vs reserved paid seat | OPEN |
+| reactivated | resume interval vs fresh interval | OPEN |
+| removed/revoked | end immediately vs end of interval | OPEN |
+| company transfer | change BillingAccount at effective_at without double count | OPEN |
+| multi-branch/multi-device | one membership/license vs scoped purchased seats | OPEN |
+
+Event `tenant_id, membership_id, user_id, membership_version, transition_id, effective_at, company_scope_before/after, grant_version?, correlation_id`. TenantMembership writer publishes immutable change fact. Security rechecks revocation at sync/server commit; Billing doesn't trust client membership or device session as billable evidence. Transition dedup `tenant_id+membership_id+transition_id`; economic seat interval dedup `billing_account_id+membership_id+seat_license_scope+period+charge_component_version`, corrections link original charge. Proration day/instant/full cycle, price, discounts, suspension and transfer liability unresolved. See [Billing §20.3](../modules/BILLING_ARCHITECTURE.md). No changes to overall APPROVED business rules.
