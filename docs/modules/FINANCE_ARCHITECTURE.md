@@ -205,3 +205,9 @@ Test all with active tenant/company/branch context, permission revocation mid-fl
 **Do not change FIN-001's existing APPROVED label.** Technical ledger topology and all new contracts remain PROPOSED.
 
 **OPEN:** AR-001 payer/cardinality; AR-004 evidence; AR-005 recognition/transaction trigger; AR-008 canonical Party; tax jurisdiction/tax point, functional currency/rate source, FIFO vs average, fiscal calendar/close, legal entity vs branch books, third-party/intercompany settlement and authorized UX role scopes. See [FIN-002](../adr/FIN-002.md), [FIN-003](../adr/FIN-003.md).
+
+---
+
+## AR-001 — Scope-limited SaaS debtor/third-party payer approval (2026-10-12)
+
+**APPROVED_BY_USER for SaaS MVP:** every Company corresponds to one distinct LegalEntity, BillingAccount and Wallet; that Company's LegalEntity owes its SaaS service charges even if an authorized third party funds Wallet. Tenant-shared measured Resource Usage is charged to one designated responsible Company, ordinary Company/Branch resources to their owner; Branch no independent SaaS wallet. Details: [ADR-BILL-011](../adr/ADR-BILL-011.md). ERP sales-invoice debtor and GL/AR/AP are never inferred from this SaaS contract; separate ERP GL vs SaaS wallet remains. **PROPOSED** prospective two-role assignment and immutable liability snapshots. **OPEN** legal identity verification, tax jurisdiction, remitter authority, refund/chargeback, intercompany clearing and FIN-001 original approval provenance.

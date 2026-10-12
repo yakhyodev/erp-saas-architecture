@@ -297,3 +297,11 @@ Latest **Billing §20.1** distinguishes `payer_party_id` (funding actor) from `l
 **Additional acceptance refinement:** extend existing MT-NEG-13 with payer_party ≠ legal_debtor, third-party funder authorization, effective-dated company transfer and split-accrual replay; extend MT-NEG-11 with two event IDs sharing one business_occurrence_id across placement cutover, expecting one Billing economic posting. These are **test designs not run**. Billing §§20.2–20.5 calendar-month, seat status, document trigger and closed-month treatment remain OPEN.
 
 **Approval gate:** user + Billing + Finance confirm payer/debtor/Wallet cardinality and shared-seat allocation; Security + Multi-Tenant + Backend + Master confirm single writer and revocation boundary; Database + Security + Infrastructure approve selected shared-schema/RLS or dedicated placement/restore strategy. No implementation authorization or changes to central registries.
+
+---
+
+## 21. AR-001 / MR-01 — User-approved MVP billing cardinality (2026-10-12)
+
+**APPROVED_BY_USER:** Tenant may contain multiple Companies; each MVP Company has its own distinct LegalEntity, BillingAccount and Wallet (1:1:1:1); Branch no wallet. Company LegalEntity bears its SaaS debt; authorized third-party top-up does not move debt. Seat same user within one Company is not multiplied by branches/devices, but separately counted per distinct Company. Tenant-shared measured Resource Usage is billed to one preassigned responsible Company; Company/Branch usage to owning Company. [ADR-BILL-011](../adr/ADR-BILL-011.md). Old §15/19/20 option tables are comparative history; do not interpret former OPEN MVP cardinality wording as current approval status. Enterprise consolidated payer stays OPEN.
+
+**PROPOSED:** Multi-Tenant validates organization/legal linkage/effective membership, Billing owns account/wallet/rating and assignment snapshot; Security checks role/scope. Tenant admin proposes and receiving Company's financial representative accepts responsible-company switch; assignment future-effective, historical debtor/credits unchanged and no guessed wallet, automatic offset or unauthorized retroactive charge. Exact approval delegation, metering cutoff/timezone, LegalEntity merge/migration and compliance remain OPEN.

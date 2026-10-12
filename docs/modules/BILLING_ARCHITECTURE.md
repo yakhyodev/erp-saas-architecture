@@ -362,3 +362,11 @@ Related: [ADR-BILL-001](../adr/ADR-BILL-001.md), [ADR-BILL-006](../adr/ADR-BILL-
 **Resource / pricing:** no Resource Usage category, inclusion allowance, units, thresholds or numerical rate approved. Rate-order variants: enterprise override then standard discount vs enterprise net price; marginal tiers selected for review but stacking, ordering, overlapping contract, rounding, carry-forward and period window still OPEN. Persist immutable pricing/version/contract breakdown.
 
 **Implementation gate:** selected preferences are neither ADR APPROVED nor production acceptance. Business + Multi-Tenant + Finance + Security + Sales + Mobile sign-off for their respective owner contracts and separate user confirmation required. No code authorized and no global registries changed here.
+
+---
+
+## 22. User-approved MVP Company liability va Tenant-shared Resource Usage (2026-10-12)
+
+[ADR-BILL-011](../adr/ADR-BILL-011.md) — scoped authoritative decision record. **APPROVED_BY_USER:** MVP Company 1:1 distinct LegalEntity 1:1 BillingAccount 1:1 Wallet, Branch uchun alohida wallet yo'q; Company LegalEntity o'z SaaS qarzi uchun javobgar; authorized third-party Wallet top-up debt transfer emas; Seat user × Company bo'yicha, bitta Companyda Branch/device bo'yicha takrorlanmaydi; Tenant-shared haqiqiy Resource Usage oldindan tayinlangan bitta responsible Company hisobidan, ordinary Company/Branch usage o'z Company hisobidan. Eski §§3, 19–21 dagi aynan shu MVP cardinality/scope "not approved" jumlalari endi ushbu tor qism uchun tarixiy alternativ bo'lib qoladi; enterprise wallet pooling va boshqa opsiyalar APPROVED emas.
+
+**PROPOSED / OPEN:** Tenant admin proposes, receiving Company finance representative accepts; versioned prospective-only assignment, no retroactive ledger mutation/no automatic Wallet transfer; next whole metering interval candidate only. No guessed billing account, unresolved source in PENDING_ATTRIBUTION. Third-party payer authorization evidence, refunds/disputes, resource classes/units/tariffs, billing time boundaries, Seat activation/day prorating, document charge eligibility, negative-month anchor and late offline effective month remain OPEN. Technical writer: Billing financial assignment/rating/Wallet; Multi-Tenant organization validation; Security auth; SaaS wallet remains separate from ERP Finance GL.
